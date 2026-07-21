@@ -1,0 +1,141 @@
+services:
+  postgres:
+    image: postgres:18.4-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "${DATABASE_NAME:?}"
+      POSTGRES_USER: "${DATABASE_USER:?}"
+      POSTGRES_PASSWORD: "${DATABASE_PASSWORD:?}"
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - "${REDIS_PASSWORD:?}"
+    environment:
+      REDISCLI_AUTH: "${REDIS_PASSWORD:?}"
+    volumes:
+      - redis_prod_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: "${MINIO_ACCESS_KEY:?}"
+      MINIO_ROOT_PASSWORD: "${MINIO_SECRET_KEY:?}"
+    expose:
+      - "9000"
+      - "9001"
+    volumes:
+      - minio_prod_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/minio/health/live >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  backend:
+    image: ghcr.io/svn-investment-technology-jsc/dakrosa-be:${BACKEND_IMAGE_TAG:-production}
+    pull_policy: always
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      PORT: "8080"
+      APP_ORIGIN: "${APP_ORIGIN:?}"
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: "${DATABASE_NAME:?}"
+      DATABASE_USER: "${DATABASE_USER:?}"
+      DATABASE_PASSWORD: "${DATABASE_PASSWORD:?}"
+      DATABASE_SSL: "${DATABASE_SSL:-false}"
+      REDIS_URL: "redis://:${REDIS_PASSWORD:?}@redis:6379/0"
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: "9000"
+      MINIO_USE_SSL: "false"
+      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY:?}"
+      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY:?}"
+      MINIO_BUCKET: "${MINIO_BUCKET:?}"
+      JWT_ACCESS_SECRET: "${JWT_ACCESS_SECRET:?}"
+      JWT_ACCESS_TTL: "${JWT_ACCESS_TTL:-15m}"
+      REFRESH_TOKEN_DAYS: "${REFRESH_TOKEN_DAYS:-7}"
+      COOKIE_SECURE: "${COOKIE_SECURE:-true}"
+      ADMIN_USERNAME: "${ADMIN_USERNAME:-admin}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:?}"
+      ADMIN_DISPLAY_NAME: "${ADMIN_DISPLAY_NAME:-Quản trị hệ thống}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@dakrosa.local}"
+      ADMIN_PHONE: "${ADMIN_PHONE:-0000000000}"
+      ADMIN_JOINED_AT: "${ADMIN_JOINED_AT:-2026-01-01}"
+    command: >-
+      sh -c "pnpm db:migration:run:prod &&
+      pnpm db:seed:prod &&
+      exec node dist/main.js"
+    expose:
+      - "8080"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:8080/api/v1/health').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1));",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  frontend:
+    image: ghcr.io/svn-investment-technology-jsc/dakrosa-fe:${FRONTEND_IMAGE_TAG:-production}
+    pull_policy: always
+    restart: unless-stopped
+    init: true
+    expose:
+      - "3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1));",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_prod_data:
+  redis_prod_data:
+  minio_prod_data:

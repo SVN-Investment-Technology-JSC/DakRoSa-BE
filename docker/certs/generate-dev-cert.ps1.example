@@ -1,0 +1,13 @@
+param(
+  [string]$DnsName = "localhost"
+)
+
+$ErrorActionPreference = "Stop"
+$certDirectory = $PSScriptRoot
+openssl req -x509 -nodes -newkey rsa:4096 -sha256 -days 365 `
+  -keyout (Join-Path $certDirectory "server.key") `
+  -out (Join-Path $certDirectory "server.crt") `
+  -subj "/CN=$DnsName" `
+  -addext "subjectAltName=DNS:$DnsName,IP:127.0.0.1"
+Write-Host "Development certificate created in $certDirectory"
+

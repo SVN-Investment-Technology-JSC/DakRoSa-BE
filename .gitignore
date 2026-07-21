@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.development.example
+!.env.production.example
+docker/certs/*
+!docker/certs/.gitkeep
+!docker/certs/*.example
+logs/
+*.log

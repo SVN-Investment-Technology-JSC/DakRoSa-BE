@@ -1,0 +1,11 @@
+packages:
+  - '.'
+verifyDepsBeforeRun: false
+packageImportMethod: copy
+minimumReleaseAge: 1440
+trustPolicy: no-downgrade
+trustPolicyIgnoreAfter: 525600
+allowBuilds:
+  argon2: true
+  unrs-resolver: true
+  '@scarf/scarf': false
