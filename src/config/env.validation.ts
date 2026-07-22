@@ -26,7 +26,7 @@ export const envValidationSchema = Joi.object({
   ADMIN_USERNAME: Joi.string().min(3).default('admin'),
   ADMIN_PASSWORD: Joi.string().min(12).required(),
   ADMIN_DISPLAY_NAME: Joi.string().default('Quản trị hệ thống'),
-  ADMIN_EMAIL: Joi.string().email().default('admin@dakrosa.local'),
+  ADMIN_EMAIL: Joi.string().email().default('savinahub@gmail.com'),
   ADMIN_PHONE: Joi.string().min(7).max(30).default('0000000000'),
   ADMIN_JOINED_AT: Joi.string()
     .pattern(/^\d{4}-\d{2}-\d{2}$/)

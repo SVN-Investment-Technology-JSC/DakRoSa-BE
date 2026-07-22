@@ -83,7 +83,7 @@ services:
       ADMIN_USERNAME: "${ADMIN_USERNAME:-admin}"
       ADMIN_PASSWORD: "${ADMIN_PASSWORD:?}"
       ADMIN_DISPLAY_NAME: "${ADMIN_DISPLAY_NAME:-Quản trị hệ thống}"
-      ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@dakrosa.local}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-savinahub@gmail.com}"
       ADMIN_PHONE: "${ADMIN_PHONE:-0000000000}"
       ADMIN_JOINED_AT: "${ADMIN_JOINED_AT:-2026-01-01}"
     command: >-

@@ -43,6 +43,9 @@ async function seed(): Promise<void> {
 
   const username = (process.env.ADMIN_USERNAME ?? 'admin').trim().toLowerCase();
   const password = process.env.ADMIN_PASSWORD;
+  const adminEmail = (process.env.ADMIN_EMAIL ?? 'savinahub@gmail.com')
+    .trim()
+    .toLowerCase();
   if (!password || password.length < 12) {
     throw new Error('ADMIN_PASSWORD must contain at least 12 characters.');
   }
@@ -53,9 +56,7 @@ async function seed(): Promise<void> {
       username,
       displayName: process.env.ADMIN_DISPLAY_NAME ?? 'Quản trị hệ thống',
       shortName: 'ADMIN',
-      email: (process.env.ADMIN_EMAIL ?? 'admin@dakrosa.local')
-        .trim()
-        .toLowerCase(),
+      email: adminEmail,
       phone: process.env.ADMIN_PHONE ?? '0000000000',
       address: null,
       joinedAt: process.env.ADMIN_JOINED_AT ?? '2026-01-01',
@@ -65,9 +66,17 @@ async function seed(): Promise<void> {
       roles: [adminRole],
     });
     await userRepository.save(admin);
-  } else if (!admin.roles.some((role) => role.code === 'admin')) {
-    admin.roles = [...admin.roles, adminRole];
-    await userRepository.save(admin);
+  } else {
+    let shouldSaveAdmin = false;
+    if (admin.email === 'admin@dakrosa.local') {
+      admin.email = adminEmail;
+      shouldSaveAdmin = true;
+    }
+    if (!admin.roles.some((role) => role.code === 'admin')) {
+      admin.roles = [...admin.roles, adminRole];
+      shouldSaveAdmin = true;
+    }
+    if (shouldSaveAdmin) await userRepository.save(admin);
   }
 
   // Never print credentials or token material. This line only confirms completion.
