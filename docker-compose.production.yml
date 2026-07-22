@@ -117,6 +117,9 @@ services:
     pull_policy: always
     restart: unless-stopped
     init: true
+    environment:
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
     expose:
       - "3000"
     healthcheck:
