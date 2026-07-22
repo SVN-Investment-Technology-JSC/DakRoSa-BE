@@ -16,6 +16,7 @@
     "start:prod": "cross-env NODE_ENV=production node dist/main.js",
     "lint": "eslint \"{src,test}/**/*.ts\" --max-warnings=0",
     "test": "jest",
+    "test:ci": "jest --runInBand --passWithNoTests",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "db:migration:run": "typeorm-ts-node-commonjs -d src/database/data-source.ts migration:run",
