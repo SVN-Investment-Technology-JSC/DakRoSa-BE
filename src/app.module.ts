@@ -23,6 +23,10 @@ import { UsersModule } from './users/users.module';
 import { TenancyModule } from './tenancy/tenancy.module';
 import { EOfficeModule } from './e-office/e-office.module';
 import { SignaturesModule } from './signatures/signatures.module';
+import { EquipmentModule } from './equipment/equipment.module';
+import { InventoryModule } from './inventory/inventory.module';
+import { WorkOrderModule } from './work-order/work-order.module';
+import { MaintenanceModule } from './maintenance/maintenance.module';
 
 @Module({
   imports: [
@@ -68,6 +72,10 @@ import { SignaturesModule } from './signatures/signatures.module';
     SignaturesModule,
     DashboardModule,
     HealthModule,
+    EquipmentModule,
+    InventoryModule,
+    WorkOrderModule,
+    MaintenanceModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

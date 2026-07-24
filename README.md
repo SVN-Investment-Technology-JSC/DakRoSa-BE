@@ -18,6 +18,15 @@ Backend NestJS cho nền tảng quản trị doanh nghiệp đa tenant. ĐăkRơ
 
 HRM, chấm công, quản lý dự án, kết nối nhà cung cấp chữ ký số và Collector SCADA nằm ở các increment kế tiếp.
 
+## Giai đoạn 2 (CMMS)
+
+- **Equipment:** Quản lý danh mục thiết bị, máy móc với cấu trúc cây (Parent - Child).
+- **Inventory:** Quản lý danh mục vật tư, tồn kho tại nhiều vị trí, theo dõi lịch sử giao dịch (Nhập/Xuất kho). Sử dụng Database Transaction để đảm bảo tính toàn vẹn dữ liệu.
+- **Work Orders:** Quản lý sự cố, phiếu công việc, phân công kỹ thuật viên và theo dõi thời gian dừng máy (Downtime).
+- **Maintenance:** Thiết lập kế hoạch bảo trì phòng ngừa (Preventive Maintenance) dựa trên chu kỳ thời gian.
+- **Bảo mật bổ sung:** Các API mới đều được bảo vệ bằng JWT và sử dụng decorator `@RequirePermissions()` cho từng Action cụ thể.
+
+
 ## Yêu cầu
 
 - Node.js >= 20.9 (đã kiểm thử với Node.js 24.14).

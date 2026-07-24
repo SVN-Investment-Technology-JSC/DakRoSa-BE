@@ -2,21 +2,7 @@ import 'reflect-metadata';
 import { config as loadEnv } from 'dotenv';
 import { DataSource } from 'typeorm';
 import { join } from 'path';
-import {
-  AuditLogEntity,
-  AuthSessionEntity,
-  OrganizationUnitEntity,
-  PermissionEntity,
-  PositionEntity,
-  RoleEntity,
-  SignatureRequestEntity,
-  SiteEntity,
-  SubmissionActionEntity,
-  SubmissionEntity,
-  TenantEntity,
-  TenantMembershipEntity,
-  UserEntity,
-} from './entities';
+import * as allEntities from './entities';
 
 const nodeEnv = process.env.NODE_ENV ?? 'development';
 loadEnv({ path: `.env.${nodeEnv}` });
@@ -33,21 +19,7 @@ const AppDataSource = new DataSource({
     process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
   synchronize: false,
   logging: nodeEnv === 'development' ? ['error', 'warn'] : ['error'],
-  entities: [
-    AuditLogEntity,
-    AuthSessionEntity,
-    OrganizationUnitEntity,
-    PermissionEntity,
-    PositionEntity,
-    RoleEntity,
-    SignatureRequestEntity,
-    SiteEntity,
-    SubmissionActionEntity,
-    SubmissionEntity,
-    TenantEntity,
-    TenantMembershipEntity,
-    UserEntity,
-  ],
+  entities: Object.values(allEntities).filter(entity => typeof entity === 'function'),
   migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
 });
 
