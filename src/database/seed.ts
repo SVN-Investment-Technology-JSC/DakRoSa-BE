@@ -5,38 +5,73 @@ import {
   PERMISSION_CATALOG,
 } from '../common/constants/permissions';
 import AppDataSource from './data-source';
-import { PermissionEntity, RoleEntity, UserEntity } from './entities';
+import {
+  PermissionEntity,
+  RoleEntity,
+  TenantEntity,
+  TenantMembershipEntity,
+  UserEntity,
+} from './entities';
 
 async function seed(): Promise<void> {
   await AppDataSource.initialize();
   const permissionRepository = AppDataSource.getRepository(PermissionEntity);
   const roleRepository = AppDataSource.getRepository(RoleEntity);
+  const tenantRepository = AppDataSource.getRepository(TenantEntity);
+  const membershipRepository = AppDataSource.getRepository(
+    TenantMembershipEntity,
+  );
   const userRepository = AppDataSource.getRepository(UserEntity);
 
   for (const definition of PERMISSION_CATALOG) {
     await permissionRepository.upsert(definition, ['key']);
   }
 
+  const tenantSlug = (
+    process.env.DEFAULT_TENANT_SLUG ?? 'dakrosa'
+  ).toLowerCase();
+  const tenant = await tenantRepository.findOneBy({ slug: tenantSlug });
+  if (!tenant) {
+    throw new Error(
+      `Tenant "${tenantSlug}" does not exist. Run database migrations first.`,
+    );
+  }
+
   const permissions = await permissionRepository.find();
-  let adminRole = await roleRepository.findOne({ where: { code: 'admin' } });
+  const defaultUserPermissionKeys = new Set<string>([
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.WORK_ITEMS_VIEW,
+    PERMISSIONS.SUBMISSIONS_VIEW,
+    PERMISSIONS.SUBMISSIONS_CREATE,
+    PERMISSIONS.SUBMISSIONS_UPDATE,
+    PERMISSIONS.SUBMISSIONS_SUBMIT,
+    PERMISSIONS.SIGNATURES_VIEW,
+  ]);
+  let adminRole = await roleRepository.findOne({
+    where: { tenantId: tenant.id, code: 'admin' },
+  });
   adminRole ??= roleRepository.create({
+    tenantId: tenant.id,
     code: 'admin',
     name: 'Quản trị hệ thống',
-    description: 'Vai trò hệ thống có toàn quyền.',
+    description: 'Vai trò quản trị toàn quyền trong phạm vi doanh nghiệp.',
     isSystem: true,
     permissions,
   });
   adminRole.permissions = permissions;
   await roleRepository.save(adminRole);
 
-  let userRole = await roleRepository.findOne({ where: { code: 'user' } });
+  let userRole = await roleRepository.findOne({
+    where: { tenantId: tenant.id, code: 'user' },
+  });
   userRole ??= roleRepository.create({
+    tenantId: tenant.id,
     code: 'user',
     name: 'Người dùng',
     description: 'Vai trò cơ bản dành cho người dùng hệ thống.',
     isSystem: true,
-    permissions: permissions.filter(
-      (permission) => permission.key === PERMISSIONS.DASHBOARD_VIEW,
+    permissions: permissions.filter((permission) =>
+      defaultUserPermissionKeys.has(permission.key),
     ),
   });
   await roleRepository.save(userRole);
@@ -63,21 +98,32 @@ async function seed(): Promise<void> {
       workShift: null,
       passwordHash: await argon2.hash(password, { type: argon2.argon2id }),
       isActive: true,
-      roles: [adminRole],
     });
     await userRepository.save(admin);
-  } else {
-    let shouldSaveAdmin = false;
-    if (admin.email === 'admin@dakrosa.local') {
-      admin.email = adminEmail;
-      shouldSaveAdmin = true;
-    }
-    if (!admin.roles.some((role) => role.code === 'admin')) {
-      admin.roles = [...admin.roles, adminRole];
-      shouldSaveAdmin = true;
-    }
-    if (shouldSaveAdmin) await userRepository.save(admin);
+  } else if (admin.email === 'admin@dakrosa.local') {
+    admin.email = adminEmail;
+    await userRepository.save(admin);
   }
+  admin.isPlatformAdmin = true;
+  await userRepository.save(admin);
+
+  let membership = await membershipRepository.findOne({
+    where: { tenantId: tenant.id, userId: admin.id },
+    relations: { roles: true },
+  });
+  membership ??= membershipRepository.create({
+    tenantId: tenant.id,
+    userId: admin.id,
+    status: 'active',
+    isDefault: true,
+    roles: [],
+  });
+  membership.status = 'active';
+  membership.isDefault = true;
+  if (!membership.roles.some((role) => role.id === adminRole.id)) {
+    membership.roles = [...membership.roles, adminRole];
+  }
+  await membershipRepository.save(membership);
 
   // Never print credentials or token material. This line only confirms completion.
   process.stdout.write('Database seed completed.\n');

@@ -24,11 +24,12 @@ export class RbacService {
     private readonly audit: AuditService,
   ) {}
 
-  listRoles(): Promise<RoleEntity[]> {
+  listRoles(actor: AuthUser): Promise<RoleEntity[]> {
     return this.roles
       .createQueryBuilder('role')
       .leftJoinAndSelect('role.permissions', 'permission')
-      .where('role.code <> :admin', { admin: 'admin' })
+      .where('role.tenantId = :tenantId', { tenantId: actor.tenantId })
+      .andWhere('role.code <> :admin', { admin: 'admin' })
       .orderBy('role.name', 'ASC')
       .addOrderBy('permission.group', 'ASC')
       .addOrderBy('permission.key', 'ASC')
@@ -39,9 +40,9 @@ export class RbacService {
     return this.permissions.find({ order: { group: 'ASC', key: 'ASC' } });
   }
 
-  async getRole(id: string): Promise<RoleEntity> {
+  async getRole(id: string, actor: AuthUser): Promise<RoleEntity> {
     const role = await this.roles.findOne({
-      where: { id },
+      where: { id, tenantId: actor.tenantId },
       relations: { permissions: true },
     });
     if (!role || role.code === 'admin')
@@ -56,11 +57,16 @@ export class RbacService {
   ): Promise<RoleEntity> {
     if (dto.code === 'admin')
       throw new BadRequestException('Mã vai trò này được bảo vệ.');
-    if (await this.roles.exists({ where: { code: dto.code } })) {
+    if (
+      await this.roles.exists({
+        where: { tenantId: actor.tenantId, code: dto.code },
+      })
+    ) {
       throw new ConflictException('Mã vai trò đã tồn tại.');
     }
     const role = await this.roles.save(
       this.roles.create({
+        tenantId: actor.tenantId,
         code: dto.code,
         name: dto.name.trim(),
         description: dto.description?.trim() || null,
@@ -78,7 +84,7 @@ export class RbacService {
     actor: AuthUser,
     context: ClientContext,
   ): Promise<RoleEntity> {
-    const role = await this.getRole(id);
+    const role = await this.getRole(id, actor);
     if (dto.name !== undefined) role.name = dto.name.trim();
     if (dto.description !== undefined)
       role.description = dto.description.trim() || null;
@@ -86,7 +92,7 @@ export class RbacService {
     await this.record(actor, context, 'update', role.id, {
       fields: Object.keys(dto),
     });
-    return this.getRole(id);
+    return this.getRole(id, actor);
   }
 
   async assignPermissions(
@@ -95,12 +101,12 @@ export class RbacService {
     actor: AuthUser,
     context: ClientContext,
   ): Promise<RoleEntity> {
-    const role = await this.getRole(id);
+    const role = await this.getRole(id, actor);
     this.assertViewDependencies(permissionKeys);
     const permissions = permissionKeys.length
       ? await this.permissions.find({ where: { key: In(permissionKeys) } })
       : [];
-    if (permissions.length !== permissionKeys.length) {
+    if (permissions.length !== new Set(permissionKeys).size) {
       throw new BadRequestException(
         'Danh sách quyền chứa giá trị không hợp lệ.',
       );
@@ -110,7 +116,7 @@ export class RbacService {
     await this.record(actor, context, 'assign_permissions', role.id, {
       permissionKeys,
     });
-    return this.getRole(id);
+    return this.getRole(id, actor);
   }
 
   async remove(
@@ -118,11 +124,11 @@ export class RbacService {
     actor: AuthUser,
     context: ClientContext,
   ): Promise<void> {
-    const role = await this.getRole(id);
+    const role = await this.getRole(id, actor);
     if (role.isSystem)
       throw new BadRequestException('Không thể xóa vai trò hệ thống.');
     const result = await this.dataSource.query<Array<{ count: string }>>(
-      'SELECT COUNT(*)::text AS count FROM user_roles WHERE role_id = $1',
+      'SELECT COUNT(*)::text AS count FROM membership_roles WHERE role_id = $1',
       [id],
     );
     if (Number(result[0]?.count ?? 0) > 0) {
@@ -152,6 +158,7 @@ export class RbacService {
     details: Record<string, unknown>,
   ): Promise<void> {
     return this.audit.record({
+      tenantId: actor.tenantId,
       userId: actor.id,
       username: actor.username,
       action,

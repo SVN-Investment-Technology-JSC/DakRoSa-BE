@@ -1,6 +1,6 @@
 # DakRoSa Backend
 
-Backend NestJS cho Core Portal của hệ thống quản lý tập trung dữ liệu và quy trình vận hành Nhà máy Thủy điện ĐăkRơSa.
+Backend NestJS cho nền tảng quản trị doanh nghiệp đa tenant. ĐăkRơSa là tenant khởi tạo đầu tiên, không phải giới hạn kiến trúc.
 
 ## Phạm vi increment đầu tiên
 
@@ -12,8 +12,11 @@ Backend NestJS cho Core Portal của hệ thống quản lý tập trung dữ li
 - Backend là nguồn quyết định quyền; vai trò `admin` được bảo vệ và không xuất hiện trong màn hình gán quyền.
 - Audit log không ghi request body, mật khẩu, token, cookie hay Authorization header.
 - PostgreSQL migration, Redis, MinIO, OpenAPI và health check.
+- Tenant membership, chuyển tenant trong phiên, vai trò tách theo tenant và route frontend `/t/{tenantSlug}`.
+- E-Office: hồ sơ nháp, gửi duyệt, phê duyệt/trả lại, lịch sử hành động và việc được phân công.
+- Hàng đợi chữ ký số độc lập nhà cung cấp; chưa gọi dịch vụ ký thật khi PoC chưa được chọn.
 
-Collector SCADA, dashboard dữ liệu vận hành, báo cáo và cảnh báo chưa nằm trong increment này.
+HRM, chấm công, quản lý dự án, kết nối nhà cung cấp chữ ký số và Collector SCADA nằm ở các increment kế tiếp.
 
 ## Yêu cầu
 
@@ -77,7 +80,13 @@ pnpm db:seed
 
 `synchronize` luôn tắt ở cả development và production. Mọi thay đổi schema phải đi qua migration.
 
-Các bảng nền tảng: `users`, `roles`, `permissions`, `user_roles`, `role_permissions`, `auth_sessions`, `audit_logs`.
+Các bảng nền tảng: `tenants`, `sites`, `users`, `tenant_memberships`, `roles`, `membership_roles`, `permissions`, `role_permissions`, `auth_sessions`, `audit_logs`.
+
+Các bảng E-Office: `submissions`, `submission_actions`, `signature_requests`.
+
+Migration `1795400000000-AddMultiTenantEOfficeFoundation` tự tạo tenant ĐăkRơSa mặc định và chuyển dữ liệu `user_roles` cũ sang `membership_roles`. Sau migration phải chạy `pnpm db:seed` để đồng bộ permission mới và quyền admin.
+
+Nếu seed cho tenant khác đã tồn tại, đặt `DEFAULT_TENANT_SLUG` trước khi chạy seed.
 
 ## Kiểm tra chất lượng
 
@@ -96,4 +105,3 @@ pnpm build
 - Không thêm permission chỉ ở frontend; endpoint tương ứng phải có `@RequirePermissions`.
 - Không dùng `synchronize: true`, kể cả development.
 - Không commit `.env`, certificate, private key hoặc credential thật.
-

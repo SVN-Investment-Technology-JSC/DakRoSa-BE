@@ -21,6 +21,7 @@ import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { AuthService } from './auth.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
+import { SwitchTenantDto } from './dto/switch-tenant.dto';
 
 const REFRESH_COOKIE = 'drs_refresh';
 
@@ -100,6 +101,13 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
+  @Post('switch-tenant')
+  @HttpCode(200)
+  switchTenant(@CurrentUser() user: AuthUser, @Body() dto: SwitchTenantDto) {
+    return this.authService.switchTenant(user, dto.tenantSlug);
+  }
+
+  @ApiBearerAuth()
   @Post('logout-all')
   @HttpCode(204)
   async logoutAll(
@@ -133,6 +141,9 @@ export class AuthController {
       id: user.id,
       username: user.username,
       displayName: user.displayName,
+      tenantId: user.tenantId,
+      tenantSlug: user.tenantSlug,
+      membershipId: user.membershipId,
       roleCodes: user.roleCodes,
       permissions: user.permissions,
     };

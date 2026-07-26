@@ -2,12 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinTable,
-  ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { RoleEntity } from './role.entity';
+import { TenantMembershipEntity } from './tenant-membership.entity';
 
 @Entity({ name: 'users' })
 export class UserEntity {
@@ -44,16 +43,14 @@ export class UserEntity {
   @Column({ name: 'is_active', default: true })
   isActive!: boolean;
 
+  @Column({ name: 'is_platform_admin', default: false })
+  isPlatformAdmin!: boolean;
+
   @Column({ name: 'last_login_at', type: 'timestamptz', nullable: true })
   lastLoginAt!: Date | null;
 
-  @ManyToMany(() => RoleEntity, { eager: true })
-  @JoinTable({
-    name: 'user_roles',
-    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
-  })
-  roles!: RoleEntity[];
+  @OneToMany(() => TenantMembershipEntity, (membership) => membership.user)
+  memberships!: TenantMembershipEntity[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

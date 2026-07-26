@@ -4,6 +4,7 @@ import {
   IsArray,
   IsDateString,
   IsEmail,
+  IsIn,
   IsOptional,
   IsString,
   IsUUID,
@@ -67,4 +68,22 @@ export class CreateUserDto {
   @ArrayMaxSize(20)
   @IsUUID('4', { each: true })
   roleIds!: string[];
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsUUID('4')
+  organizationUnitId?: string | null;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsUUID('4')
+  positionId?: string | null;
+
+  @ApiProperty({
+    required: false,
+    enum: ['tenant', 'organization_unit', 'site', 'own'],
+  })
+  @IsOptional()
+  @IsIn(['tenant', 'organization_unit', 'site', 'own'])
+  dataScope?: 'tenant' | 'organization_unit' | 'site' | 'own';
 }

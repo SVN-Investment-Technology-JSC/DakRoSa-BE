@@ -33,20 +33,20 @@ export class UsersController {
 
   @Get()
   @RequirePermissions(PERMISSIONS.USERS_VIEW)
-  list(@Query() query: UserQueryDto) {
-    return this.service.list(query);
+  list(@Query() query: UserQueryDto, @CurrentUser() actor: AuthUser) {
+    return this.service.list(query, actor);
   }
 
   @Get('assignable-roles')
   @RequirePermissions(PERMISSIONS.USERS_VIEW)
-  assignableRoles() {
-    return this.service.listAssignableRoles();
+  assignableRoles(@CurrentUser() actor: AuthUser) {
+    return this.service.listAssignableRoles(actor);
   }
 
   @Get(':id')
   @RequirePermissions(PERMISSIONS.USERS_VIEW)
-  get(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.getById(id);
+  get(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: AuthUser) {
+    return this.service.getById(id, actor);
   }
 
   @Post()

@@ -8,6 +8,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserEntity } from './user.entity';
+import { TenantMembershipEntity } from './tenant-membership.entity';
+import { TenantEntity } from './tenant.entity';
 
 @Entity({ name: 'auth_sessions' })
 export class AuthSessionEntity {
@@ -21,6 +23,22 @@ export class AuthSessionEntity {
   @Column({ name: 'user_id', type: 'uuid' })
   @Index()
   userId!: string;
+
+  @Column({ name: 'tenant_id', type: 'uuid' })
+  @Index()
+  tenantId!: string;
+
+  @ManyToOne(() => TenantEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'tenant_id' })
+  tenant!: TenantEntity;
+
+  @Column({ name: 'membership_id', type: 'uuid' })
+  @Index()
+  membershipId!: string;
+
+  @ManyToOne(() => TenantMembershipEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'membership_id' })
+  membership!: TenantMembershipEntity;
 
   @Column({ name: 'refresh_token_hash', unique: true, length: 64 })
   refreshTokenHash!: string;

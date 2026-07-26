@@ -5,15 +5,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { IsNull, MoreThan, Repository } from 'typeorm';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
-import { AuthSessionEntity, UserEntity } from '../database/entities';
+import {
+  AuthSessionEntity,
+  TenantMembershipEntity,
+} from '../database/entities';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     config: ConfigService,
-    @InjectRepository(UserEntity)
-    private readonly usersRepository: Repository<UserEntity>,
+    @InjectRepository(TenantMembershipEntity)
+    private readonly membershipsRepository: Repository<TenantMembershipEntity>,
     @InjectRepository(AuthSessionEntity)
     private readonly sessionsRepository: Repository<AuthSessionEntity>,
   ) {
@@ -25,33 +28,52 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload): Promise<AuthUser> {
-    const [user, session] = await Promise.all([
-      this.usersRepository.findOne({
-        where: { id: payload.sub, isActive: true },
-        relations: { roles: { permissions: true } },
+    const [membership, session] = await Promise.all([
+      this.membershipsRepository.findOne({
+        where: {
+          id: payload.mid,
+          tenantId: payload.tid,
+          userId: payload.sub,
+          status: 'active',
+          user: { isActive: true },
+          tenant: { status: 'active' },
+        },
+        relations: {
+          user: true,
+          tenant: true,
+          roles: { permissions: true },
+        },
       }),
       this.sessionsRepository.findOne({
         where: {
           id: payload.sid,
           userId: payload.sub,
+          tenantId: payload.tid,
+          membershipId: payload.mid,
           revokedAt: IsNull(),
           expiresAt: MoreThan(new Date()),
         },
       }),
     ]);
-    if (!user || !session)
+    if (!membership || !session)
       throw new UnauthorizedException('Phiên đăng nhập không hợp lệ.');
+
     return {
-      id: user.id,
-      username: user.username,
-      displayName: user.displayName,
+      id: membership.user.id,
+      username: membership.user.username,
+      displayName: membership.user.displayName,
       sessionId: session.id,
       tokenId: payload.jti,
-      roleCodes: user.roles.map((role) => role.code),
+      tenantId: membership.tenantId,
+      tenantSlug: membership.tenant.slug,
+      enabledModules: membership.tenant.enabledModules,
+      membershipId: membership.id,
+      isPlatformAdmin: membership.user.isPlatformAdmin,
+      roleCodes: membership.roles.map((role) => role.code),
       permissions: [
         ...new Set(
-          user.roles.flatMap((role) =>
-            role.permissions.map((item) => item.key),
+          membership.roles.flatMap((role) =>
+            role.permissions.map((permission) => permission.key),
           ),
         ),
       ],
