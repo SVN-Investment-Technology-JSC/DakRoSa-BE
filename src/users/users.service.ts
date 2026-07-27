@@ -68,11 +68,9 @@ export class UsersService {
       .orderBy('user.createdAt', 'DESC')
       .skip((query.page - 1) * query.limit)
       .take(query.limit);
-    if (!actor.isPlatformAdmin) {
-      builder.andWhere('membership.tenantId = :tenantId', {
-        tenantId: actor.tenantId,
-      });
-    }
+    builder.andWhere('membership.tenantId = :tenantId', {
+      tenantId: actor.tenantId,
+    });
     if (query.search?.trim()) {
       builder.andWhere(
         '(user.username ILIKE :search OR user.displayName ILIKE :search OR user.email ILIKE :search OR user.phone ILIKE :search)',
