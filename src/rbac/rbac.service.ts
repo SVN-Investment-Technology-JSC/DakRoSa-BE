@@ -163,6 +163,7 @@ export class RbacService {
     roleId: string,
     actor: AuthUser,
   ): Promise<void> {
+    if (actor.isPlatformAdmin) return;
     const membership = await this.memberships.findOne({
       where: { tenantId: actor.tenantId, userId: actor.id },
       relations: { roles: true },
