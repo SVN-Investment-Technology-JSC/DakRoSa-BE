@@ -40,7 +40,11 @@ export class WorkOrderEntity {
   @Column({ type: 'enum', enum: WorkOrderType })
   type!: WorkOrderType;
 
-  @Column({ type: 'enum', enum: WorkOrderStatus, default: WorkOrderStatus.DRAFT })
+  @Column({
+    type: 'enum',
+    enum: WorkOrderStatus,
+    default: WorkOrderStatus.DRAFT,
+  })
   status!: WorkOrderStatus;
 
   @Column({ length: 50, default: 'NORMAL' })

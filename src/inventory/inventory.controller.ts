@@ -28,7 +28,9 @@ export class InventoryController {
 
   @Get(['stock', 'stock/:warehouseId'])
   @RequirePermissions('inventory.view')
-  @ApiOperation({ summary: 'Get current stock in all warehouses or a specific one' })
+  @ApiOperation({
+    summary: 'Get current stock in all warehouses or a specific one',
+  })
   getInventory(@Param('warehouseId') warehouseId?: string) {
     return this.inventoryService.getInventory(warehouseId);
   }
@@ -43,9 +45,12 @@ export class InventoryController {
   @Post('transactions')
   @RequirePermissions('inventory.transaction')
   @ApiOperation({ summary: 'Execute an inventory transaction (IMPORT/EXPORT)' })
-  executeTransaction(@Body() dto: InventoryTransactionDto, @Req() req: Request) {
+  executeTransaction(
+    @Body() dto: InventoryTransactionDto,
+    @Req() req: Request,
+  ) {
     // In a real app, user is extracted from req.user
-    const user = req.user as any;
+    const user = req.user as { id: string };
     return this.inventoryService.executeTransaction(dto, user?.id);
   }
 }

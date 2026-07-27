@@ -19,7 +19,9 @@ const AppDataSource = new DataSource({
     process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
   synchronize: false,
   logging: nodeEnv === 'development' ? ['error', 'warn'] : ['error'],
-  entities: Object.values(allEntities).filter(entity => typeof entity === 'function'),
+  entities: Object.values(allEntities).filter(
+    (entity) => typeof entity === 'function',
+  ),
   migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
 });
 

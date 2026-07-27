@@ -6,7 +6,9 @@ import { EquipmentService } from './equipment.service';
 import { EquipmentController } from './equipment.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([EquipmentEntity, EquipmentDocumentEntity])],
+  imports: [
+    TypeOrmModule.forFeature([EquipmentEntity, EquipmentDocumentEntity]),
+  ],
   controllers: [EquipmentController],
 
   providers: [EquipmentService],

@@ -1,11 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { 
-  WarehouseEntity, 
-  MaterialEntity, 
-  MaterialInventoryEntity, 
-  InventoryTransactionEntity 
+import {
+  WarehouseEntity,
+  MaterialEntity,
+  MaterialInventoryEntity,
+  InventoryTransactionEntity,
 } from '../database/entities';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { InventoryTransactionDto } from './dto/inventory-transaction.dto';
@@ -23,9 +28,14 @@ export class InventoryService {
   ) {}
 
   async createMaterial(createMaterialDto: CreateMaterialDto) {
-    const exists = await this.materialRepository.findOne({ where: { code: createMaterialDto.code } });
-    if (exists) throw new ConflictException(`Material code ${createMaterialDto.code} exists`);
-    
+    const exists = await this.materialRepository.findOne({
+      where: { code: createMaterialDto.code },
+    });
+    if (exists)
+      throw new ConflictException(
+        `Material code ${createMaterialDto.code} exists`,
+      );
+
     const material = this.materialRepository.create(createMaterialDto);
     return this.materialRepository.save(material);
   }
@@ -48,16 +58,23 @@ export class InventoryService {
     await queryRunner.startTransaction();
 
     try {
-      const warehouse = await queryRunner.manager.findOne(WarehouseEntity, { where: { id: dto.warehouseId } });
+      const warehouse = await queryRunner.manager.findOne(WarehouseEntity, {
+        where: { id: dto.warehouseId },
+      });
       if (!warehouse) throw new NotFoundException('Warehouse not found');
 
-      const material = await queryRunner.manager.findOne(MaterialEntity, { where: { id: dto.materialId } });
+      const material = await queryRunner.manager.findOne(MaterialEntity, {
+        where: { id: dto.materialId },
+      });
       if (!material) throw new NotFoundException('Material not found');
 
-      let inventory = await queryRunner.manager.findOne(MaterialInventoryEntity, {
-        where: { warehouseId: dto.warehouseId, materialId: dto.materialId },
-        lock: { mode: 'pessimistic_write' }
-      });
+      let inventory = await queryRunner.manager.findOne(
+        MaterialInventoryEntity,
+        {
+          where: { warehouseId: dto.warehouseId, materialId: dto.materialId },
+          lock: { mode: 'pessimistic_write' },
+        },
+      );
 
       if (!inventory) {
         if (dto.type === 'EXPORT') {
@@ -66,13 +83,15 @@ export class InventoryService {
         inventory = queryRunner.manager.create(MaterialInventoryEntity, {
           warehouseId: dto.warehouseId,
           materialId: dto.materialId,
-          quantity: 0
+          quantity: 0,
         });
       }
 
       if (dto.type === 'EXPORT') {
         if (inventory.quantity < dto.quantity) {
-          throw new BadRequestException(`Insufficient quantity. Available: ${inventory.quantity}`);
+          throw new BadRequestException(
+            `Insufficient quantity. Available: ${inventory.quantity}`,
+          );
         }
         inventory.quantity -= dto.quantity;
       } else {
@@ -81,15 +100,18 @@ export class InventoryService {
 
       await queryRunner.manager.save(inventory);
 
-      const transaction = queryRunner.manager.create(InventoryTransactionEntity, {
-        warehouseId: dto.warehouseId,
-        materialId: dto.materialId,
-        type: dto.type,
-        quantity: dto.quantity,
-        referenceId: dto.referenceId,
-        note: dto.note,
-        createdBy: userId,
-      });
+      const transaction = queryRunner.manager.create(
+        InventoryTransactionEntity,
+        {
+          warehouseId: dto.warehouseId,
+          materialId: dto.materialId,
+          type: dto.type,
+          quantity: dto.quantity,
+          referenceId: dto.referenceId,
+          note: dto.note,
+          createdBy: userId,
+        },
+      );
 
       await queryRunner.manager.save(transaction);
       await queryRunner.commitTransaction();
@@ -104,7 +126,8 @@ export class InventoryService {
   }
 
   async getLowStockAlerts() {
-    const qb = this.inventoryRepository.createQueryBuilder('inv')
+    const qb = this.inventoryRepository
+      .createQueryBuilder('inv')
       .leftJoinAndSelect('inv.material', 'mat')
       .leftJoinAndSelect('inv.warehouse', 'wh')
       .where('inv.quantity <= mat.min_stock');

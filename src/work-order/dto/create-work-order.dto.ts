@@ -1,6 +1,15 @@
-import { IsNotEmpty, IsOptional, IsString, IsEnum, IsUUID } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsEnum,
+  IsUUID,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { WorkOrderType, WorkOrderStatus } from '../../database/entities/work-order.entity';
+import {
+  WorkOrderType,
+  WorkOrderStatus,
+} from '../../database/entities/work-order.entity';
 
 export class CreateWorkOrderDto {
   @ApiProperty({ description: 'Work Order Code' })

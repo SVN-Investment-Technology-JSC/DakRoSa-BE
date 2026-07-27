@@ -1,4 +1,12 @@
-import { IsNotEmpty, IsOptional, IsString, IsNumber, Min, IsUUID, IsIn } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsNumber,
+  Min,
+  IsUUID,
+  IsIn,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class InventoryTransactionDto {

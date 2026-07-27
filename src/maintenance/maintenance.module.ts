@@ -10,4 +10,3 @@ import { MaintenancePlanEntity } from '../database/entities';
   providers: [MaintenanceService],
 })
 export class MaintenanceModule {}
-

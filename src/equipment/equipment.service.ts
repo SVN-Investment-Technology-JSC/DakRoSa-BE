@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
@@ -15,14 +19,20 @@ export class EquipmentService {
   ) {}
 
   async create(createEquipmentDto: CreateEquipmentDto) {
-    const exists = await this.equipmentRepository.findOne({ where: { code: createEquipmentDto.code } });
+    const exists = await this.equipmentRepository.findOne({
+      where: { code: createEquipmentDto.code },
+    });
     if (exists) {
-      throw new ConflictException(`Equipment with code ${createEquipmentDto.code} already exists`);
+      throw new ConflictException(
+        `Equipment with code ${createEquipmentDto.code} already exists`,
+      );
     }
 
     let parent = null;
     if (createEquipmentDto.parentId) {
-      parent = await this.equipmentRepository.findOne({ where: { id: createEquipmentDto.parentId } });
+      parent = await this.equipmentRepository.findOne({
+        where: { id: createEquipmentDto.parentId },
+      });
       if (!parent) throw new NotFoundException('Parent equipment not found');
     }
 
@@ -44,13 +54,16 @@ export class EquipmentService {
       where: { parentId: IsNull() },
       relations: ['children'],
     });
-    
+
     // For nested deeply we would use TreeRepository if we set up @Tree in typeorm,
     // but for simple structures, Adjacency list with relations is fine if depth is low.
     // To recursively load children:
     const loadChildren = async (items: EquipmentEntity[]) => {
       for (const item of items) {
-        const fullItem = await this.equipmentRepository.findOne({ where: { id: item.id }, relations: ['children'] });
+        const fullItem = await this.equipmentRepository.findOne({
+          where: { id: item.id },
+          relations: ['children'],
+        });
         if (fullItem && fullItem.children?.length) {
           item.children = fullItem.children;
           await loadChildren(item.children);
@@ -62,9 +75,9 @@ export class EquipmentService {
   }
 
   async findOne(id: string) {
-    const equipment = await this.equipmentRepository.findOne({ 
+    const equipment = await this.equipmentRepository.findOne({
       where: { id },
-      relations: ['parent', 'children']
+      relations: ['parent', 'children'],
     });
     if (!equipment) throw new NotFoundException('Equipment not found');
     return equipment;
@@ -74,15 +87,22 @@ export class EquipmentService {
     const equipment = await this.findOne(id);
 
     if (updateEquipmentDto.code && updateEquipmentDto.code !== equipment.code) {
-      const exists = await this.equipmentRepository.findOne({ where: { code: updateEquipmentDto.code } });
-      if (exists) throw new ConflictException(`Equipment with code ${updateEquipmentDto.code} already exists`);
+      const exists = await this.equipmentRepository.findOne({
+        where: { code: updateEquipmentDto.code },
+      });
+      if (exists)
+        throw new ConflictException(
+          `Equipment with code ${updateEquipmentDto.code} already exists`,
+        );
     }
 
     if (updateEquipmentDto.parentId !== undefined) {
       if (updateEquipmentDto.parentId === null) {
         equipment.parent = null;
       } else {
-        const parent = await this.equipmentRepository.findOne({ where: { id: updateEquipmentDto.parentId } });
+        const parent = await this.equipmentRepository.findOne({
+          where: { id: updateEquipmentDto.parentId },
+        });
         if (!parent) throw new NotFoundException('Parent equipment not found');
         equipment.parent = parent;
       }

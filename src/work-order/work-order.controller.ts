@@ -16,7 +16,7 @@ export class WorkOrderController {
   @RequirePermissions('work_order.create')
   @ApiOperation({ summary: 'Create new work order' })
   create(@Body() dto: CreateWorkOrderDto, @Req() req: Request) {
-    const user = req.user as any;
+    const user = req.user as { id: string };
     return this.workOrderService.create(dto, user?.id);
   }
 
@@ -37,8 +37,12 @@ export class WorkOrderController {
   @Patch(':id')
   @RequirePermissions('work_order.update')
   @ApiOperation({ summary: 'Update work order status/details' })
-  update(@Param('id') id: string, @Body() dto: UpdateWorkOrderDto, @Req() req: Request) {
-    const user = req.user as any;
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateWorkOrderDto,
+    @Req() req: Request,
+  ) {
+    const user = req.user as { id: string };
     return this.workOrderService.update(id, dto, user?.id);
   }
 }

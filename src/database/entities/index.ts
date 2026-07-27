@@ -21,5 +21,3 @@ export * from './work-order.entity';
 export * from './work-order-log.entity';
 export * from './work-order-material.entity';
 export * from './maintenance-plan.entity';
-
-
