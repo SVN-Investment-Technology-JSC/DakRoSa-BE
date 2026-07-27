@@ -11,6 +11,8 @@ export const PERMISSIONS = {
   ROLES_DELETE: 'roles.delete',
   ROLES_ASSIGN_PERMISSIONS: 'roles.assign-permissions',
   AUDIT_VIEW: 'audit.view',
+  OPERATIONS_VIEW: 'operations.view',
+  EOFFICE_VIEW: 'eoffice.view',
   TENANT_SETTINGS_VIEW: 'tenant-settings.view',
   TENANT_SETTINGS_UPDATE: 'tenant-settings.update',
   ORGANIZATION_VIEW: 'organization.view',
@@ -104,6 +106,18 @@ export const PERMISSION_CATALOG: ReadonlyArray<{
     name: 'Xem nhật ký',
     group: 'Nhật ký',
     description: 'Theo dõi các thay đổi quản trị.',
+  },
+  {
+    key: PERMISSIONS.OPERATIONS_VIEW,
+    name: 'Xem vận hành',
+    group: 'Vận hành',
+    description: 'Truy cập các màn hình vận hành nhà máy được cấp quyền.',
+  },
+  {
+    key: PERMISSIONS.EOFFICE_VIEW,
+    name: 'Xem eOffice',
+    group: 'eOffice',
+    description: 'Truy cập không gian eOffice và các phân hệ được cấp quyền.',
   },
   {
     key: PERMISSIONS.TENANT_SETTINGS_VIEW,
