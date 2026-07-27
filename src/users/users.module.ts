@@ -7,6 +7,7 @@ import {
   PositionEntity,
   RoleEntity,
   TenantMembershipEntity,
+  TenantEntity,
   UserEntity,
 } from '../database/entities';
 import { UsersController } from './users.controller';
@@ -19,6 +20,7 @@ import { UsersService } from './users.service';
       RoleEntity,
       AuthSessionEntity,
       TenantMembershipEntity,
+      TenantEntity,
       OrganizationUnitEntity,
       PositionEntity,
     ]),

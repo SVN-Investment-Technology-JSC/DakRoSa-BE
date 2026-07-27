@@ -21,6 +21,7 @@ export class TenantModuleGuard implements CanActivate {
     if (!modules?.length) return true;
 
     const request = context.switchToHttp().getRequest<{ user?: AuthUser }>();
+    if (request.user?.isPlatformAdmin) return true;
     const enabledModules = request.user?.enabledModules ?? [];
     if (modules.every((module) => enabledModules.includes(module))) return true;
 

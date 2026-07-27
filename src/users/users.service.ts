@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import {
   PositionEntity,
   RoleEntity,
   TenantMembershipEntity,
+  TenantEntity,
   UserEntity,
 } from '../database/entities';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -28,6 +30,9 @@ type TenantUserView = UserEntity & {
   organizationUnit: OrganizationUnitEntity | null;
   position: PositionEntity | null;
   dataScope: TenantMembershipEntity['dataScope'];
+  tenantId: string;
+  tenantName: string;
+  tenantShortName: string;
 };
 
 @Injectable()
@@ -39,6 +44,8 @@ export class UsersService {
     private readonly roles: Repository<RoleEntity>,
     @InjectRepository(TenantMembershipEntity)
     private readonly memberships: Repository<TenantMembershipEntity>,
+    @InjectRepository(TenantEntity)
+    private readonly tenants: Repository<TenantEntity>,
     @InjectRepository(AuthSessionEntity)
     private readonly sessions: Repository<AuthSessionEntity>,
     @InjectRepository(OrganizationUnitEntity)
@@ -53,15 +60,19 @@ export class UsersService {
     const builder = this.memberships
       .createQueryBuilder('membership')
       .innerJoinAndSelect('membership.user', 'user')
+      .innerJoinAndSelect('membership.tenant', 'tenant')
       .leftJoinAndSelect('membership.roles', 'role')
       .leftJoinAndSelect('membership.organizationUnit', 'organizationUnit')
       .leftJoinAndSelect('membership.position', 'position')
-      .where('membership.tenantId = :tenantId', {
-        tenantId: actor.tenantId,
-      })
+      .where('user.isPlatformAdmin = false')
       .orderBy('user.createdAt', 'DESC')
       .skip((query.page - 1) * query.limit)
       .take(query.limit);
+    if (!actor.isPlatformAdmin) {
+      builder.andWhere('membership.tenantId = :tenantId', {
+        tenantId: actor.tenantId,
+      });
+    }
     if (query.search?.trim()) {
       builder.andWhere(
         '(user.username ILIKE :search OR user.displayName ILIKE :search OR user.email ILIKE :search OR user.phone ILIKE :search)',
@@ -79,8 +90,15 @@ export class UsersService {
     };
   }
 
-  async getById(id: string, actor: AuthUser): Promise<TenantUserView> {
-    const membership = await this.findMembership(id, actor.tenantId);
+  async getById(
+    id: string,
+    actor: AuthUser,
+    requestedTenantId?: string,
+  ): Promise<TenantUserView> {
+    const membership = await this.findMembership(
+      id,
+      await this.resolveTenantId(actor, requestedTenantId),
+    );
     return this.toTenantUser(membership);
   }
 
@@ -88,18 +106,20 @@ export class UsersService {
     dto: CreateUserDto,
     actor: AuthUser,
     context: ClientContext,
+    requestedTenantId?: string,
   ): Promise<TenantUserView> {
+    const tenantId = await this.resolveTenantId(actor, requestedTenantId);
     const username = dto.username.trim().toLowerCase();
     if (await this.users.exists({ where: { username } })) {
       throw new ConflictException('Tên đăng nhập đã tồn tại.');
     }
     const email = dto.email.trim().toLowerCase();
     await this.assertEmailAvailable(email);
-    const roles = await this.getAssignableRoles(dto.roleIds, actor.tenantId);
+    const roles = await this.getAssignableRoles(dto.roleIds, tenantId, actor);
     await this.assertOrganizationAssignment(
       dto.organizationUnitId,
       dto.positionId,
-      actor.tenantId,
+      tenantId,
     );
     const passwordHash = await argon2.hash(dto.password, {
       type: argon2.argon2id,
@@ -122,7 +142,7 @@ export class UsersService {
       );
       await manager.getRepository(TenantMembershipEntity).save(
         manager.getRepository(TenantMembershipEntity).create({
-          tenantId: actor.tenantId,
+          tenantId,
           userId: createdUser.id,
           status: 'active',
           isDefault: true,
@@ -136,7 +156,7 @@ export class UsersService {
     });
 
     await this.audit.record({
-      tenantId: actor.tenantId,
+      tenantId,
       userId: actor.id,
       username: actor.username,
       action: 'create',
@@ -148,7 +168,7 @@ export class UsersService {
         roleCodes: roles.map((role) => role.code),
       },
     });
-    return this.getById(user.id, actor);
+    return this.getById(user.id, actor, tenantId);
   }
 
   async update(
@@ -156,8 +176,10 @@ export class UsersService {
     dto: UpdateUserDto,
     actor: AuthUser,
     context: ClientContext,
+    requestedTenantId?: string,
   ): Promise<TenantUserView> {
-    const membership = await this.findMembership(id, actor.tenantId);
+    const tenantId = await this.resolveTenantId(actor, requestedTenantId);
+    const membership = await this.findMembership(id, tenantId);
     this.assertNotAdmin(membership);
     if (dto.roleIds !== undefined && membership.userId === actor.id) {
       throw new BadRequestException(
@@ -184,7 +206,8 @@ export class UsersService {
     if (dto.roleIds !== undefined)
       membership.roles = await this.getAssignableRoles(
         dto.roleIds,
-        actor.tenantId,
+        tenantId,
+        actor,
       );
     if (dto.organizationUnitId !== undefined || dto.positionId !== undefined) {
       const organizationUnitId =
@@ -196,7 +219,7 @@ export class UsersService {
       await this.assertOrganizationAssignment(
         organizationUnitId,
         positionId,
-        actor.tenantId,
+        tenantId,
       );
       membership.organizationUnitId = organizationUnitId;
       membership.positionId = positionId;
@@ -211,7 +234,7 @@ export class UsersService {
       );
     }
     await this.audit.record({
-      tenantId: actor.tenantId,
+      tenantId,
       userId: actor.id,
       username: actor.username,
       action: 'update',
@@ -220,7 +243,7 @@ export class UsersService {
       ipAddress: context.ipAddress,
       details: { fields: Object.keys(dto) },
     });
-    return this.getById(user.id, actor);
+    return this.getById(user.id, actor, tenantId);
   }
 
   async resetPassword(
@@ -228,8 +251,10 @@ export class UsersService {
     newPassword: string,
     actor: AuthUser,
     context: ClientContext,
+    requestedTenantId?: string,
   ): Promise<void> {
-    const membership = await this.findMembership(id, actor.tenantId);
+    const tenantId = await this.resolveTenantId(actor, requestedTenantId);
+    const membership = await this.findMembership(id, tenantId);
     this.assertNotAdmin(membership);
     await this.users.update(id, {
       passwordHash: await argon2.hash(newPassword, { type: argon2.argon2id }),
@@ -239,7 +264,7 @@ export class UsersService {
       { revokedAt: new Date() },
     );
     await this.audit.record({
-      tenantId: actor.tenantId,
+      tenantId,
       userId: actor.id,
       username: actor.username,
       action: 'reset_password',
@@ -253,8 +278,10 @@ export class UsersService {
     id: string,
     actor: AuthUser,
     context: ClientContext,
+    requestedTenantId?: string,
   ): Promise<void> {
-    const membership = await this.findMembership(id, actor.tenantId);
+    const tenantId = await this.resolveTenantId(actor, requestedTenantId);
+    const membership = await this.findMembership(id, tenantId);
     this.assertNotAdmin(membership);
     if (membership.userId === actor.id)
       throw new BadRequestException(
@@ -263,7 +290,7 @@ export class UsersService {
 
     await this.memberships.remove(membership);
     await this.sessions.update(
-      { userId: id, tenantId: actor.tenantId, revokedAt: IsNull() },
+      { userId: id, tenantId, revokedAt: IsNull() },
       { revokedAt: new Date() },
     );
     const remainingMemberships = await this.memberships.countBy({ userId: id });
@@ -271,7 +298,7 @@ export class UsersService {
       await this.users.remove(membership.user);
     }
     await this.audit.record({
-      tenantId: actor.tenantId,
+      tenantId,
       userId: actor.id,
       username: actor.username,
       action: 'remove_membership',
@@ -282,13 +309,18 @@ export class UsersService {
     });
   }
 
-  listAssignableRoles(actor: AuthUser): Promise<RoleEntity[]> {
-    return this.roles
+  async listAssignableRoles(
+    actor: AuthUser,
+    requestedTenantId?: string,
+  ): Promise<RoleEntity[]> {
+    const tenantId = await this.resolveTenantId(actor, requestedTenantId);
+    const builder = this.roles
       .createQueryBuilder('role')
-      .where('role.tenantId = :tenantId', { tenantId: actor.tenantId })
-      .andWhere('role.code <> :admin', { admin: 'admin' })
-      .orderBy('role.name', 'ASC')
-      .getMany();
+      .where('role.tenantId = :tenantId', { tenantId });
+    if (!actor.isPlatformAdmin) {
+      builder.andWhere('role.code <> :admin', { admin: 'admin' });
+    }
+    return builder.orderBy('role.name', 'ASC').getMany();
   }
 
   private async findMembership(
@@ -300,6 +332,7 @@ export class UsersService {
       relations: {
         user: true,
         roles: true,
+        tenant: true,
         organizationUnit: true,
         position: true,
       },
@@ -313,14 +346,17 @@ export class UsersService {
   private async getAssignableRoles(
     ids: string[],
     tenantId: string,
+    actor: AuthUser,
   ): Promise<RoleEntity[]> {
     if (!ids.length) return [];
-    const roles = await this.roles
+    const builder = this.roles
       .createQueryBuilder('role')
       .where('role.id IN (:...ids)', { ids })
-      .andWhere('role.tenantId = :tenantId', { tenantId })
-      .andWhere('role.code <> :admin', { admin: 'admin' })
-      .getMany();
+      .andWhere('role.tenantId = :tenantId', { tenantId });
+    if (!actor.isPlatformAdmin) {
+      builder.andWhere('role.code <> :admin', { admin: 'admin' });
+    }
+    const roles = await builder.getMany();
     if (roles.length !== new Set(ids).size) {
       throw new BadRequestException(
         'Danh sách vai trò chứa giá trị không hợp lệ.',
@@ -333,6 +369,21 @@ export class UsersService {
     if (membership.user.isPlatformAdmin) {
       throw new BadRequestException('Tài khoản quản trị hệ thống được bảo vệ.');
     }
+  }
+
+  private async resolveTenantId(
+    actor: AuthUser,
+    requestedTenantId?: string,
+  ): Promise<string> {
+    if (!requestedTenantId) return actor.tenantId;
+    if (!actor.isPlatformAdmin) {
+      throw new ForbiddenException(
+        'Chỉ quản trị hệ thống mới có thể chọn doanh nghiệp khác.',
+      );
+    }
+    const tenant = await this.tenants.findOneBy({ id: requestedTenantId });
+    if (!tenant) throw new NotFoundException('Không tìm thấy doanh nghiệp.');
+    return tenant.id;
   }
 
   private async assertOrganizationAssignment(
@@ -387,6 +438,9 @@ export class UsersService {
       organizationUnit: membership.organizationUnit ?? null,
       position: membership.position ?? null,
       dataScope: membership.dataScope,
+      tenantId: membership.tenantId,
+      tenantName: membership.tenant.name,
+      tenantShortName: membership.tenant.shortName,
     });
   }
 }

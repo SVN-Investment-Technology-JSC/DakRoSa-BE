@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as argon2 from 'argon2';
+import { randomBytes } from 'crypto';
 import { DataSource, Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
 import {
@@ -262,13 +263,24 @@ export class TenancyService {
     dto: CreateTenantDto,
     actor: AuthUser,
     context: ClientContext,
-  ): Promise<TenantEntity> {
+  ): Promise<
+    TenantEntity & {
+      initialAdmin: { username: string; password: string; displayName: string };
+    }
+  > {
     const slug = dto.slug.trim().toLowerCase();
     const code = dto.code.trim().toUpperCase();
+    const adminUsername = `admin-${slug}`;
+    if (adminUsername.length > 80) {
+      throw new BadRequestException(
+        'Slug doanh nghiệp tối đa 74 ký tự để tạo được tên đăng nhập admin-{tenantSlug}.',
+      );
+    }
     if (await this.tenants.exists({ where: [{ slug }, { code }] })) {
       throw new ConflictException('Mã hoặc slug doanh nghiệp đã tồn tại.');
     }
-    const tenant = await this.dataSource.transaction(async (manager) => {
+    const initialPassword = randomBytes(18).toString('base64url');
+    const result = await this.dataSource.transaction(async (manager) => {
       const created = await manager.getRepository(TenantEntity).save(
         manager.getRepository(TenantEntity).create({
           slug,
@@ -315,33 +327,68 @@ export class TenancyService {
           ),
         }),
       );
+      const initialAdmin = await manager.getRepository(UserEntity).save(
+        manager.getRepository(UserEntity).create({
+          username: adminUsername,
+          displayName: `Quản trị ${created.shortName}`,
+          shortName: 'Admin',
+          email: `${adminUsername}@tenant.local`,
+          phone: '0000000000',
+          address: null,
+          joinedAt: new Date().toISOString().slice(0, 10),
+          workShift: null,
+          passwordHash: await argon2.hash(initialPassword, {
+            type: argon2.argon2id,
+          }),
+          isActive: true,
+          isPlatformAdmin: false,
+        }),
+      );
       await manager.getRepository(TenantMembershipEntity).save(
         manager.getRepository(TenantMembershipEntity).create({
           tenantId: created.id,
-          userId: actor.id,
+          userId: initialAdmin.id,
           status: 'active',
-          isDefault: false,
+          isDefault: true,
           roles: [adminRole],
           organizationUnitId: null,
           positionId: null,
           dataScope: 'tenant',
         }),
       );
-      return created;
+      await manager.getRepository(TenantMembershipEntity).save(
+        manager.getRepository(TenantMembershipEntity).create({
+          tenantId: created.id,
+          userId: actor.id,
+          status: 'active',
+          isDefault: false,
+          roles: [],
+          organizationUnitId: null,
+          positionId: null,
+          dataScope: 'tenant',
+        }),
+      );
+      return { tenant: created, initialAdmin };
     });
     await this.record(
       actor,
       context,
       'create',
       'tenant',
-      tenant.id,
+      result.tenant.id,
       {
-        code: tenant.code,
-        slug: tenant.slug,
+        code: result.tenant.code,
+        slug: result.tenant.slug,
       },
-      tenant.id,
+      result.tenant.id,
     );
-    return tenant;
+    return Object.assign(result.tenant, {
+      initialAdmin: {
+        username: result.initialAdmin.username,
+        password: initialPassword,
+        displayName: result.initialAdmin.displayName,
+      },
+    });
   }
 
   async updatePlatformTenant(

@@ -126,9 +126,9 @@ async function seed(): Promise<void> {
   });
   membership.status = 'active';
   membership.isDefault = true;
-  if (!membership.roles.some((role) => role.id === adminRole.id)) {
-    membership.roles = [...membership.roles, adminRole];
-  }
+  // Platform authority is determined only by users.is_platform_admin. Do not
+  // attach a tenant's administrator role to the platform account.
+  membership.roles = membership.roles.filter((role) => role.code !== 'admin');
   await membershipRepository.save(membership);
 
   // Never print credentials or token material. This line only confirms completion.

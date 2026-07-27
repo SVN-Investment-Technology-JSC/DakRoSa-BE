@@ -271,6 +271,7 @@ export class EOfficeService {
     }
     if (
       submission.currentAssigneeId !== user.id &&
+      !user.isPlatformAdmin &&
       !user.roleCodes.includes('admin')
     ) {
       throw new ForbiddenException('Hồ sơ không được phân công cho bạn.');
