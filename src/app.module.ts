@@ -20,6 +20,9 @@ import { RbacModule } from './rbac/rbac.module';
 import { REDIS, RedisModule } from './redis/redis.module';
 import { StorageModule } from './storage/storage.module';
 import { UsersModule } from './users/users.module';
+import { TenancyModule } from './tenancy/tenancy.module';
+import { EOfficeModule } from './e-office/e-office.module';
+import { SignaturesModule } from './signatures/signatures.module';
 
 @Module({
   imports: [
@@ -60,6 +63,9 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     UsersModule,
     RbacModule,
+    TenancyModule,
+    EOfficeModule,
+    SignaturesModule,
     DashboardModule,
     HealthModule,
   ],

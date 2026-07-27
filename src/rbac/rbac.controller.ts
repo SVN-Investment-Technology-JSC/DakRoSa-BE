@@ -32,14 +32,14 @@ export class RbacController {
 
   @Get('roles')
   @RequirePermissions(PERMISSIONS.ROLES_VIEW)
-  roles() {
-    return this.service.listRoles();
+  roles(@CurrentUser() actor: AuthUser) {
+    return this.service.listRoles(actor);
   }
 
   @Get('roles/:id')
   @RequirePermissions(PERMISSIONS.ROLES_VIEW)
-  role(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.getRole(id);
+  role(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: AuthUser) {
+    return this.service.getRole(id, actor);
   }
 
   @Get('permissions')

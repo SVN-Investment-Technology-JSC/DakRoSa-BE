@@ -33,20 +33,27 @@ export class UsersController {
 
   @Get()
   @RequirePermissions(PERMISSIONS.USERS_VIEW)
-  list(@Query() query: UserQueryDto) {
-    return this.service.list(query);
+  list(@Query() query: UserQueryDto, @CurrentUser() actor: AuthUser) {
+    return this.service.list(query, actor);
   }
 
   @Get('assignable-roles')
   @RequirePermissions(PERMISSIONS.USERS_VIEW)
-  assignableRoles() {
-    return this.service.listAssignableRoles();
+  assignableRoles(
+    @CurrentUser() actor: AuthUser,
+    @Query('tenantId') tenantId?: string,
+  ) {
+    return this.service.listAssignableRoles(actor, tenantId);
   }
 
   @Get(':id')
   @RequirePermissions(PERMISSIONS.USERS_VIEW)
-  get(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.getById(id);
+  get(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthUser,
+    @Query('tenantId') tenantId?: string,
+  ) {
+    return this.service.getById(id, actor, tenantId);
   }
 
   @Post()
@@ -55,8 +62,9 @@ export class UsersController {
     @Body() dto: CreateUserDto,
     @CurrentUser() actor: AuthUser,
     @ClientContextParam() context: ClientContext,
+    @Query('tenantId') tenantId?: string,
   ) {
-    return this.service.create(dto, actor, context);
+    return this.service.create(dto, actor, context, tenantId);
   }
 
   @Patch(':id')
@@ -66,8 +74,9 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
     @CurrentUser() actor: AuthUser,
     @ClientContextParam() context: ClientContext,
+    @Query('tenantId') tenantId?: string,
   ) {
-    return this.service.update(id, dto, actor, context);
+    return this.service.update(id, dto, actor, context, tenantId);
   }
 
   @Post(':id/reset-password')
@@ -78,8 +87,15 @@ export class UsersController {
     @Body() dto: ResetPasswordDto,
     @CurrentUser() actor: AuthUser,
     @ClientContextParam() context: ClientContext,
+    @Query('tenantId') tenantId?: string,
   ) {
-    return this.service.resetPassword(id, dto.newPassword, actor, context);
+    return this.service.resetPassword(
+      id,
+      dto.newPassword,
+      actor,
+      context,
+      tenantId,
+    );
   }
 
   @Delete(':id')
@@ -89,7 +105,8 @@ export class UsersController {
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() actor: AuthUser,
     @ClientContextParam() context: ClientContext,
+    @Query('tenantId') tenantId?: string,
   ) {
-    return this.service.remove(id, actor, context);
+    return this.service.remove(id, actor, context, tenantId);
   }
 }

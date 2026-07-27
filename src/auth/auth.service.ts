@@ -12,10 +12,18 @@ import { createHash, randomBytes, randomUUID } from 'crypto';
 import Redis from 'ioredis';
 import { IsNull, MoreThan, Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
-import { AuthUser } from '../common/interfaces/auth-user.interface';
-import { AuthSessionEntity, UserEntity } from '../database/entities';
-import { REDIS } from '../redis/redis.module';
 import { ClientContext } from '../common/decorators/client-context.decorator';
+import {
+  AuthProfile,
+  AuthTenant,
+  AuthUser,
+} from '../common/interfaces/auth-user.interface';
+import {
+  AuthSessionEntity,
+  TenantMembershipEntity,
+  UserEntity,
+} from '../database/entities';
+import { REDIS } from '../redis/redis.module';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 export interface AuthResult {
@@ -23,7 +31,7 @@ export interface AuthResult {
   expiresIn: string;
   refreshToken: string;
   refreshExpiresAt: Date;
-  user: Omit<AuthUser, 'sessionId' | 'tokenId'>;
+  user: AuthProfile;
 }
 
 @Injectable()
@@ -33,6 +41,8 @@ export class AuthService {
     private readonly usersRepository: Repository<UserEntity>,
     @InjectRepository(AuthSessionEntity)
     private readonly sessionsRepository: Repository<AuthSessionEntity>,
+    @InjectRepository(TenantMembershipEntity)
+    private readonly membershipsRepository: Repository<TenantMembershipEntity>,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly audit: AuditService,
@@ -63,12 +73,27 @@ export class AuthService {
       throw new ForbiddenException('Tài khoản đã bị khóa.');
     }
 
-    const result = await this.createSessionAndTokens(user, context);
+    const memberships = await this.findActiveMemberships(user.id);
+    const membership =
+      memberships.find((item) => item.isDefault) ?? memberships[0];
+    if (!membership) {
+      throw new ForbiddenException(
+        'Tài khoản chưa được cấp quyền truy cập doanh nghiệp.',
+      );
+    }
+
+    const result = await this.createSessionAndTokens(
+      user,
+      membership,
+      memberships,
+      context,
+    );
     user.lastLoginAt = new Date();
     await this.usersRepository.update(user.id, {
       lastLoginAt: user.lastLoginAt,
     });
     await this.audit.record({
+      tenantId: membership.tenantId,
       userId: user.id,
       username: user.username,
       action: 'login',
@@ -92,9 +117,17 @@ export class AuthService {
         revokedAt: IsNull(),
         expiresAt: MoreThan(new Date()),
       },
-      relations: { user: { roles: { permissions: true } } },
+      relations: {
+        user: true,
+        membership: { tenant: true, roles: { permissions: true } },
+      },
     });
-    if (!session || !session.user.isActive) {
+    if (
+      !session ||
+      !session.user.isActive ||
+      session.membership.status !== 'active' ||
+      session.membership.tenant.status !== 'active'
+    ) {
       throw new UnauthorizedException(
         'Phiên đăng nhập đã hết hạn hoặc bị thu hồi.',
       );
@@ -106,12 +139,60 @@ export class AuthService {
     session.ipAddress = context.ipAddress;
     await this.sessionsRepository.save(session);
 
-    const access = await this.issueAccessToken(session.user, session.id);
+    const memberships = await this.findActiveMemberships(session.user.id);
+    const access = await this.issueAccessToken(
+      session.user,
+      session.membership,
+      session.id,
+    );
     return {
       ...access,
       refreshToken: nextToken,
       refreshExpiresAt: session.expiresAt,
-      user: this.toPublicUser(session.user),
+      user: this.toPublicUser(session.user, session.membership, memberships),
+    };
+  }
+
+  async switchTenant(
+    user: AuthUser,
+    tenantSlug: string,
+  ): Promise<Omit<AuthResult, 'refreshToken' | 'refreshExpiresAt'>> {
+    const membership = await this.membershipsRepository.findOne({
+      where: {
+        userId: user.id,
+        status: 'active',
+        tenant: { slug: tenantSlug, status: 'active' },
+      },
+      relations: { tenant: true, roles: { permissions: true } },
+    });
+    if (!membership) {
+      throw new ForbiddenException(
+        'Bạn không có quyền truy cập doanh nghiệp này.',
+      );
+    }
+
+    await this.sessionsRepository.update(
+      { id: user.sessionId, userId: user.id, revokedAt: IsNull() },
+      { tenantId: membership.tenantId, membershipId: membership.id },
+    );
+    const entity = await this.usersRepository.findOneByOrFail({ id: user.id });
+    const memberships = await this.findActiveMemberships(user.id);
+    const access = await this.issueAccessToken(
+      entity,
+      membership,
+      user.sessionId,
+    );
+    await this.audit.record({
+      tenantId: membership.tenantId,
+      userId: user.id,
+      username: user.username,
+      action: 'switch_tenant',
+      resource: 'auth',
+      resourceId: membership.tenantId,
+    });
+    return {
+      ...access,
+      user: this.toPublicUser(entity, membership, memberships),
     };
   }
 
@@ -134,6 +215,7 @@ export class AuthService {
       { revokedAt: new Date() },
     );
     await this.audit.record({
+      tenantId: user.tenantId,
       userId: user.id,
       username: user.username,
       action: 'logout_all',
@@ -162,6 +244,7 @@ export class AuthService {
       { revokedAt: new Date() },
     );
     await this.audit.record({
+      tenantId: user.tenantId,
       userId: user.id,
       username: user.username,
       action: 'change_password',
@@ -171,6 +254,8 @@ export class AuthService {
 
   private async createSessionAndTokens(
     user: UserEntity,
+    membership: TenantMembershipEntity,
+    memberships: TenantMembershipEntity[],
     context: ClientContext,
   ): Promise<AuthResult> {
     const refreshToken = randomBytes(64).toString('base64url');
@@ -179,6 +264,8 @@ export class AuthService {
     const session = await this.sessionsRepository.save(
       this.sessionsRepository.create({
         userId: user.id,
+        tenantId: membership.tenantId,
+        membershipId: membership.id,
         refreshTokenHash: this.hashRefreshToken(refreshToken),
         userAgent: context.userAgent,
         ipAddress: context.ipAddress,
@@ -186,21 +273,27 @@ export class AuthService {
         revokedAt: null,
       }),
     );
-    const access = await this.issueAccessToken(user, session.id);
+    const access = await this.issueAccessToken(user, membership, session.id);
     return {
       ...access,
       refreshToken,
       refreshExpiresAt: expiresAt,
-      user: this.toPublicUser(user),
+      user: this.toPublicUser(user, membership, memberships),
     };
   }
 
-  private async issueAccessToken(user: UserEntity, sessionId: string) {
+  private async issueAccessToken(
+    user: UserEntity,
+    membership: TenantMembershipEntity,
+    sessionId: string,
+  ) {
     const expiresIn = this.config.getOrThrow<string>('auth.jwtTtl');
     const payload: JwtPayload = {
       sub: user.id,
       username: user.username,
       sid: sessionId,
+      tid: membership.tenantId,
+      mid: membership.id,
       jti: randomUUID(),
     };
     const accessToken = await this.jwtService.signAsync(payload, {
@@ -229,10 +322,22 @@ export class AuthService {
     return this.usersRepository
       .createQueryBuilder('user')
       .addSelect('user.passwordHash')
-      .leftJoinAndSelect('user.roles', 'role')
-      .leftJoinAndSelect('role.permissions', 'permission')
       .where('user.username = :username', { username })
       .getOne();
+  }
+
+  private findActiveMemberships(
+    userId: string,
+  ): Promise<TenantMembershipEntity[]> {
+    return this.membershipsRepository.find({
+      where: {
+        userId,
+        status: 'active',
+        tenant: { status: 'active' },
+      },
+      relations: { tenant: true, roles: { permissions: true } },
+      order: { isDefault: 'DESC', createdAt: 'ASC' },
+    });
   }
 
   private hashRefreshToken(token: string): string {
@@ -241,16 +346,44 @@ export class AuthService {
 
   private toPublicUser(
     user: UserEntity,
-  ): Omit<AuthUser, 'sessionId' | 'tokenId'> {
+    activeMembership: TenantMembershipEntity,
+    memberships: TenantMembershipEntity[],
+  ): AuthProfile {
+    const tenants = memberships.map((membership) =>
+      this.toTenantSummary(membership),
+    );
+    const activeTenant =
+      tenants.find((tenant) => tenant.id === activeMembership.tenantId) ??
+      this.toTenantSummary(activeMembership);
     return {
       id: user.id,
       username: user.username,
       displayName: user.displayName,
-      roleCodes: user.roles.map((role) => role.code),
+      isPlatformAdmin: user.isPlatformAdmin,
+      activeTenant,
+      tenants,
+      roleCodes: activeTenant.roleCodes,
+      permissions: activeTenant.permissions,
+    };
+  }
+
+  private toTenantSummary(membership: TenantMembershipEntity): AuthTenant {
+    return {
+      id: membership.tenant.id,
+      slug: membership.tenant.slug,
+      code: membership.tenant.code,
+      name: membership.tenant.name,
+      shortName: membership.tenant.shortName,
+      logoUrl: membership.tenant.logoUrl,
+      primaryColor: membership.tenant.primaryColor,
+      locale: membership.tenant.locale,
+      timezone: membership.tenant.timezone,
+      enabledModules: membership.tenant.enabledModules,
+      roleCodes: membership.roles.map((role) => role.code),
       permissions: [
         ...new Set(
-          user.roles.flatMap((role) =>
-            role.permissions.map((item) => item.key),
+          membership.roles.flatMap((role) =>
+            role.permissions.map((permission) => permission.key),
           ),
         ),
       ],

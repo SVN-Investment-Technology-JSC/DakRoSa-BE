@@ -11,6 +11,10 @@ export class AuditLogEntity {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id!: string;
 
+  @Column({ name: 'tenant_id', type: 'uuid', nullable: true })
+  @Index()
+  tenantId!: string | null;
+
   @Column({ name: 'user_id', type: 'uuid', nullable: true })
   @Index()
   userId!: string | null;

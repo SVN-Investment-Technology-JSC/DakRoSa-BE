@@ -5,8 +5,16 @@ import { join } from 'path';
 import {
   AuditLogEntity,
   AuthSessionEntity,
+  OrganizationUnitEntity,
   PermissionEntity,
+  PositionEntity,
   RoleEntity,
+  SignatureRequestEntity,
+  SiteEntity,
+  SubmissionActionEntity,
+  SubmissionEntity,
+  TenantEntity,
+  TenantMembershipEntity,
   UserEntity,
 } from './entities';
 
@@ -28,8 +36,16 @@ const AppDataSource = new DataSource({
   entities: [
     AuditLogEntity,
     AuthSessionEntity,
+    OrganizationUnitEntity,
     PermissionEntity,
+    PositionEntity,
     RoleEntity,
+    SignatureRequestEntity,
+    SiteEntity,
+    SubmissionActionEntity,
+    SubmissionEntity,
+    TenantEntity,
+    TenantMembershipEntity,
     UserEntity,
   ],
   migrations: [join(__dirname, 'migrations', '*.{ts,js}')],

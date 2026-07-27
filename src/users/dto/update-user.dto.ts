@@ -5,6 +5,7 @@ import {
   IsBoolean,
   IsDateString,
   IsEmail,
+  IsIn,
   IsOptional,
   IsString,
   IsUUID,
@@ -67,4 +68,19 @@ export class UpdateUserDto {
   @ArrayMaxSize(20)
   @IsUUID('4', { each: true })
   roleIds?: string[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID('4')
+  organizationUnitId?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID('4')
+  positionId?: string | null;
+
+  @ApiPropertyOptional({ enum: ['tenant', 'organization_unit', 'site', 'own'] })
+  @IsOptional()
+  @IsIn(['tenant', 'organization_unit', 'site', 'own'])
+  dataScope?: 'tenant' | 'organization_unit' | 'site' | 'own';
 }

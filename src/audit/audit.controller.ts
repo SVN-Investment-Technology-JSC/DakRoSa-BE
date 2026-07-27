@@ -5,6 +5,8 @@ import { Type } from 'class-transformer';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { PERMISSIONS } from '../common/constants/permissions';
 import { AuditService } from './audit.service';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuthUser } from '../common/interfaces/auth-user.interface';
 
 class AuditQueryDto {
   @IsOptional()
@@ -29,7 +31,7 @@ export class AuditController {
 
   @Get()
   @RequirePermissions(PERMISSIONS.AUDIT_VIEW)
-  list(@Query() query: AuditQueryDto) {
-    return this.auditService.list(query.page, query.limit);
+  list(@Query() query: AuditQueryDto, @CurrentUser() user: AuthUser) {
+    return this.auditService.list(user.tenantId, query.page, query.limit);
   }
 }

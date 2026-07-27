@@ -3,6 +3,8 @@ export interface JwtPayload {
   username: string;
   sid: string;
   jti: string;
+  tid: string;
+  mid: string;
   iat?: number;
   exp?: number;
 }

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { AuditLogEntity } from '../database/entities';
 
 export interface AuditEvent {
+  tenantId?: string | null;
   userId?: string | null;
   username?: string | null;
   action: string;
@@ -24,6 +25,7 @@ export class AuditService {
   async record(event: AuditEvent): Promise<void> {
     await this.repository.save(
       this.repository.create({
+        tenantId: event.tenantId ?? null,
         userId: event.userId ?? null,
         username: event.username ?? null,
         action: event.action,
@@ -37,10 +39,12 @@ export class AuditService {
   }
 
   async list(
+    tenantId: string,
     page: number,
     limit: number,
   ): Promise<{ items: AuditLogEntity[]; total: number }> {
     const [items, total] = await this.repository.findAndCount({
+      where: { tenantId },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
