@@ -441,9 +441,7 @@ export class TenancyService {
         code: 'admin',
       });
       if (!adminRole) {
-        throw new NotFoundException(
-          'Doanh nghiệp chưa có vai trò quản trị.',
-        );
+        throw new NotFoundException('Doanh nghiệp chưa có vai trò quản trị.');
       }
       const created = await manager.getRepository(UserEntity).save(
         manager.getRepository(UserEntity).create({

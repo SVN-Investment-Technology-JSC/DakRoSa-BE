@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class RemovePlatformAdminTenantRoles1795800000000
-  implements MigrationInterface
-{
+export class RemovePlatformAdminTenantRoles1795800000000 implements MigrationInterface {
   name = 'RemovePlatformAdminTenantRoles1795800000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

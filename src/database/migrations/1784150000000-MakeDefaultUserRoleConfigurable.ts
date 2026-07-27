@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class MakeDefaultUserRoleConfigurable1784150000000
-  implements MigrationInterface
-{
+export class MakeDefaultUserRoleConfigurable1784150000000 implements MigrationInterface {
   name = 'MakeDefaultUserRoleConfigurable1784150000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
