@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as argon2 from 'argon2';
 import { DataSource, Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
 import {
@@ -21,6 +22,7 @@ import {
   SiteEntity,
   TenantEntity,
   TenantMembershipEntity,
+  UserEntity,
 } from '../database/entities';
 import {
   CreateOrganizationUnitDto,
@@ -30,6 +32,7 @@ import {
 } from './dto/organization.dto';
 import { CreateSiteDto, UpdateSiteDto } from './dto/site.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
+import { CreateTenantAdminDto } from './dto/create-tenant-admin.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 
 @Injectable()
@@ -49,6 +52,8 @@ export class TenancyService {
     private readonly roles: Repository<RoleEntity>,
     @InjectRepository(PermissionEntity)
     private readonly permissions: Repository<PermissionEntity>,
+    @InjectRepository(UserEntity)
+    private readonly users: Repository<UserEntity>,
     private readonly dataSource: DataSource,
     private readonly audit: AuditService,
   ) {}
@@ -366,6 +371,74 @@ export class TenancyService {
       tenant.id,
     );
     return tenant;
+  }
+
+  async createPlatformTenantAdmin(
+    tenantId: string,
+    dto: CreateTenantAdminDto,
+    actor: AuthUser,
+    context: ClientContext,
+  ): Promise<UserEntity> {
+    await this.findTenant(tenantId);
+    const username = dto.username.trim().toLowerCase();
+    const email = dto.email.trim().toLowerCase();
+    if (await this.users.exists({ where: { username } })) {
+      throw new ConflictException('Tên đăng nhập đã tồn tại.');
+    }
+    if (await this.users.exists({ where: { email } })) {
+      throw new ConflictException('Email đã tồn tại.');
+    }
+    const user = await this.dataSource.transaction(async (manager) => {
+      const adminRole = await manager.getRepository(RoleEntity).findOneBy({
+        tenantId,
+        code: 'admin',
+      });
+      if (!adminRole) {
+        throw new NotFoundException(
+          'Doanh nghiệp chưa có vai trò quản trị được bảo vệ.',
+        );
+      }
+      const created = await manager.getRepository(UserEntity).save(
+        manager.getRepository(UserEntity).create({
+          username,
+          displayName: dto.displayName.trim(),
+          shortName: dto.shortName?.trim() || null,
+          email,
+          phone: dto.phone.trim(),
+          address: dto.address?.trim() || null,
+          joinedAt: dto.joinedAt,
+          workShift: dto.workShift?.trim() || null,
+          passwordHash: await argon2.hash(dto.password, {
+            type: argon2.argon2id,
+          }),
+          isActive: true,
+          isPlatformAdmin: false,
+        }),
+      );
+      await manager.getRepository(TenantMembershipEntity).save(
+        manager.getRepository(TenantMembershipEntity).create({
+          tenantId,
+          userId: created.id,
+          status: 'active',
+          isDefault: true,
+          roles: [adminRole],
+          organizationUnitId: dto.organizationUnitId ?? null,
+          positionId: dto.positionId ?? null,
+          dataScope: dto.dataScope ?? 'tenant',
+        }),
+      );
+      return created;
+    });
+    await this.record(
+      actor,
+      context,
+      'create_tenant_admin',
+      'user',
+      user.id,
+      { username, tenantId },
+      tenantId,
+    );
+    return user;
   }
 
   async platformListSites(tenantId: string): Promise<SiteEntity[]> {

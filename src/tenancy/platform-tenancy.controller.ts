@@ -19,6 +19,7 @@ import { PlatformAdminOnly } from '../common/decorators/platform-admin.decorator
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { CreateSiteDto, UpdateSiteDto } from './dto/site.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
+import { CreateTenantAdminDto } from './dto/create-tenant-admin.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenancyService } from './tenancy.service';
 
@@ -52,6 +53,21 @@ export class PlatformTenancyController {
     @ClientContextParam() context: ClientContext,
   ) {
     return this.service.updatePlatformTenant(id, dto, actor, context);
+  }
+
+  @Post(':tenantId/admins')
+  createTenantAdmin(
+    @Param('tenantId', ParseUUIDPipe) tenantId: string,
+    @Body() dto: CreateTenantAdminDto,
+    @CurrentUser() actor: AuthUser,
+    @ClientContextParam() context: ClientContext,
+  ) {
+    return this.service.createPlatformTenantAdmin(
+      tenantId,
+      dto,
+      actor,
+      context,
+    );
   }
 
   @Get(':tenantId/sites')

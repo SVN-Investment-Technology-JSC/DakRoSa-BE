@@ -159,6 +159,11 @@ export class UsersService {
   ): Promise<TenantUserView> {
     const membership = await this.findMembership(id, actor.tenantId);
     this.assertNotAdmin(membership);
+    if (dto.roleIds !== undefined && membership.userId === actor.id) {
+      throw new BadRequestException(
+        'Không thể tự thay đổi vai trò của chính mình.',
+      );
+    }
     const user = membership.user;
     if (dto.displayName !== undefined)
       user.displayName = dto.displayName.trim();

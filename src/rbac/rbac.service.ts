@@ -9,7 +9,11 @@ import { DataSource, In, Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
 import { ClientContext } from '../common/decorators/client-context.decorator';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
-import { PermissionEntity, RoleEntity } from '../database/entities';
+import {
+  PermissionEntity,
+  RoleEntity,
+  TenantMembershipEntity,
+} from '../database/entities';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 
@@ -20,6 +24,8 @@ export class RbacService {
     private readonly roles: Repository<RoleEntity>,
     @InjectRepository(PermissionEntity)
     private readonly permissions: Repository<PermissionEntity>,
+    @InjectRepository(TenantMembershipEntity)
+    private readonly memberships: Repository<TenantMembershipEntity>,
     private readonly dataSource: DataSource,
     private readonly audit: AuditService,
   ) {}
@@ -29,7 +35,7 @@ export class RbacService {
       .createQueryBuilder('role')
       .leftJoinAndSelect('role.permissions', 'permission')
       .where('role.tenantId = :tenantId', { tenantId: actor.tenantId })
-      .andWhere('role.code <> :admin', { admin: 'admin' })
+      .andWhere('role.isSystem = false')
       .orderBy('role.name', 'ASC')
       .addOrderBy('permission.group', 'ASC')
       .addOrderBy('permission.key', 'ASC')
@@ -45,7 +51,7 @@ export class RbacService {
       where: { id, tenantId: actor.tenantId },
       relations: { permissions: true },
     });
-    if (!role || role.code === 'admin')
+    if (!role || role.isSystem)
       throw new NotFoundException('Không tìm thấy vai trò.');
     return role;
   }
@@ -85,6 +91,7 @@ export class RbacService {
     context: ClientContext,
   ): Promise<RoleEntity> {
     const role = await this.getRole(id, actor);
+    await this.assertActorDoesNotHoldRole(role.id, actor);
     if (dto.name !== undefined) role.name = dto.name.trim();
     if (dto.description !== undefined)
       role.description = dto.description.trim() || null;
@@ -102,6 +109,7 @@ export class RbacService {
     context: ClientContext,
   ): Promise<RoleEntity> {
     const role = await this.getRole(id, actor);
+    await this.assertActorDoesNotHoldRole(role.id, actor);
     this.assertViewDependencies(permissionKeys);
     const permissions = permissionKeys.length
       ? await this.permissions.find({ where: { key: In(permissionKeys) } })
@@ -125,6 +133,7 @@ export class RbacService {
     context: ClientContext,
   ): Promise<void> {
     const role = await this.getRole(id, actor);
+    await this.assertActorDoesNotHoldRole(role.id, actor);
     if (role.isSystem)
       throw new BadRequestException('Không thể xóa vai trò hệ thống.');
     const result = await this.dataSource.query<Array<{ count: string }>>(
@@ -147,6 +156,21 @@ export class RbacService {
           `Quyền ${key} yêu cầu quyền ${resource}.view.`,
         );
       }
+    }
+  }
+
+  private async assertActorDoesNotHoldRole(
+    roleId: string,
+    actor: AuthUser,
+  ): Promise<void> {
+    const membership = await this.memberships.findOne({
+      where: { tenantId: actor.tenantId, userId: actor.id },
+      relations: { roles: true },
+    });
+    if (membership?.roles.some((role) => role.id === roleId)) {
+      throw new BadRequestException(
+        'Không thể thay đổi hoặc xóa vai trò đang cấp quyền cho chính bạn.',
+      );
     }
   }
 

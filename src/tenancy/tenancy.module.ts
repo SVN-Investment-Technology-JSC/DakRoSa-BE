@@ -8,6 +8,7 @@ import {
   SiteEntity,
   TenantEntity,
   TenantMembershipEntity,
+  UserEntity,
 } from '../database/entities';
 import { AuditModule } from '../audit/audit.module';
 import { PlatformAdminGuard } from '../auth/guards/platform-admin.guard';
@@ -24,6 +25,7 @@ import { TenancyService } from './tenancy.service';
       OrganizationUnitEntity,
       PositionEntity,
       TenantMembershipEntity,
+      UserEntity,
       RoleEntity,
       PermissionEntity,
     ]),

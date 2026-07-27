@@ -1,13 +1,21 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuditModule } from '../audit/audit.module';
-import { PermissionEntity, RoleEntity } from '../database/entities';
+import {
+  PermissionEntity,
+  RoleEntity,
+  TenantMembershipEntity,
+} from '../database/entities';
 import { RbacController } from './rbac.controller';
 import { RbacService } from './rbac.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([RoleEntity, PermissionEntity]),
+    TypeOrmModule.forFeature([
+      RoleEntity,
+      PermissionEntity,
+      TenantMembershipEntity,
+    ]),
     AuditModule,
   ],
   controllers: [RbacController],
