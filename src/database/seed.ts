@@ -53,11 +53,12 @@ async function seed(): Promise<void> {
   adminRole ??= roleRepository.create({
     tenantId: tenant.id,
     code: 'admin',
-    name: 'Quản trị hệ thống',
+    name: 'Quản trị doanh nghiệp',
     description: 'Vai trò quản trị toàn quyền trong phạm vi doanh nghiệp.',
-    isSystem: true,
+    isSystem: false,
     permissions,
   });
+  adminRole.isSystem = false;
   adminRole.permissions = permissions;
   await roleRepository.save(adminRole);
 
@@ -69,14 +70,19 @@ async function seed(): Promise<void> {
     code: 'user',
     name: 'Người dùng',
     description: 'Vai trò cơ bản dành cho người dùng hệ thống.',
-    isSystem: true,
+    isSystem: false,
     permissions: permissions.filter((permission) =>
       defaultUserPermissionKeys.has(permission.key),
     ),
   });
+  // The default user role is configurable per business. Keep older seeded
+  // databases aligned with this policy on every safe seed run.
+  userRole.isSystem = false;
   await roleRepository.save(userRole);
 
-  const username = (process.env.ADMIN_USERNAME ?? 'admin').trim().toLowerCase();
+  const username = (process.env.ADMIN_USERNAME ?? 'superadmin')
+    .trim()
+    .toLowerCase();
   const password = process.env.ADMIN_PASSWORD;
   const adminEmail = (process.env.ADMIN_EMAIL ?? 'savinahub@gmail.com')
     .trim()

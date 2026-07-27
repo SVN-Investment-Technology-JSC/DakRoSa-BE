@@ -23,7 +23,7 @@ export const envValidationSchema = Joi.object({
   JWT_ACCESS_TTL: Joi.string().default('15m'),
   REFRESH_TOKEN_DAYS: Joi.number().integer().min(1).max(90).default(7),
   COOKIE_SECURE: Joi.boolean().truthy('true').falsy('false').default(false),
-  ADMIN_USERNAME: Joi.string().min(3).default('admin'),
+  ADMIN_USERNAME: Joi.string().min(3).default('superadmin'),
   ADMIN_PASSWORD: Joi.string().min(12).required(),
   ADMIN_DISPLAY_NAME: Joi.string().default('Quản trị hệ thống'),
   ADMIN_EMAIL: Joi.string().email().default('savinahub@gmail.com'),

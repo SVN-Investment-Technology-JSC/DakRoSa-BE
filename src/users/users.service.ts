@@ -330,7 +330,7 @@ export class UsersService {
   }
 
   private assertNotAdmin(membership: TenantMembershipEntity): void {
-    if (membership.roles.some((role) => role.code === 'admin')) {
+    if (membership.user.isPlatformAdmin) {
       throw new BadRequestException('Tài khoản quản trị hệ thống được bảo vệ.');
     }
   }

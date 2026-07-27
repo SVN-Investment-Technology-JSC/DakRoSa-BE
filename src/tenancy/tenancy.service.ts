@@ -288,9 +288,9 @@ export class TenancyService {
         manager.getRepository(RoleEntity).create({
           tenantId: created.id,
           code: 'admin',
-          name: 'Quản trị hệ thống',
+          name: 'Quản trị doanh nghiệp',
           description: 'Vai trò toàn quyền trong phạm vi doanh nghiệp.',
-          isSystem: true,
+          isSystem: false,
           permissions,
         }),
       );
@@ -300,7 +300,7 @@ export class TenancyService {
           code: 'user',
           name: 'Người dùng',
           description: 'Vai trò cơ bản dành cho nhân sự doanh nghiệp.',
-          isSystem: true,
+          isSystem: false,
           permissions: permissions.filter((permission) =>
             [
               'dashboard.view',
@@ -395,7 +395,7 @@ export class TenancyService {
       });
       if (!adminRole) {
         throw new NotFoundException(
-          'Doanh nghiệp chưa có vai trò quản trị được bảo vệ.',
+          'Doanh nghiệp chưa có vai trò quản trị.',
         );
       }
       const created = await manager.getRepository(UserEntity).save(
