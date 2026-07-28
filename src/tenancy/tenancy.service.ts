@@ -9,6 +9,7 @@ import * as argon2 from 'argon2';
 import { randomBytes } from 'crypto';
 import { DataSource, Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
+import { StorageService } from '../storage/storage.service';
 import {
   DEFAULT_TENANT_MODULES,
   TenantModuleKey,
@@ -57,6 +58,7 @@ export class TenancyService {
     private readonly users: Repository<UserEntity>,
     private readonly dataSource: DataSource,
     private readonly audit: AuditService,
+    private readonly storage: StorageService,
   ) {}
 
   async bootstrap(tenantId: string) {
@@ -461,6 +463,40 @@ export class TenancyService {
     return tenant;
   }
 
+  async uploadPlatformTenantLogo(
+    id: string,
+    file: { buffer: Buffer; mimetype: string; size: number } | undefined,
+    actor: AuthUser,
+    context: ClientContext,
+  ): Promise<TenantEntity> {
+    const tenant = await this.findTenant(id);
+    this.assertTenantLogo(file);
+    await this.storage.putTenantLogo(tenant.id, file.buffer, file.mimetype);
+    tenant.logoUrl = `/api/v1/tenant-assets/${tenant.id}/logo`;
+    await this.tenants.save(tenant);
+    await this.record(actor, context, 'update_logo', 'tenant', tenant.id, undefined, tenant.id);
+    return tenant;
+  }
+
+  async removePlatformTenantLogo(
+    id: string,
+    actor: AuthUser,
+    context: ClientContext,
+  ): Promise<TenantEntity> {
+    const tenant = await this.findTenant(id);
+    if (tenant.logoUrl) await this.storage.removeTenantLogo(tenant.id);
+    tenant.logoUrl = null;
+    await this.tenants.save(tenant);
+    await this.record(actor, context, 'remove_logo', 'tenant', tenant.id, undefined, tenant.id);
+    return tenant;
+  }
+
+  async getTenantLogo(tenantId: string) {
+    const tenant = await this.tenants.findOneBy({ id: tenantId, status: 'active' });
+    if (!tenant?.logoUrl) throw new NotFoundException('Không tìm thấy logo doanh nghiệp.');
+    return this.storage.getTenantLogo(tenant.id);
+  }
+
   async permanentlyDeletePlatformTenant(
     id: string,
     confirmation: string,
@@ -474,6 +510,7 @@ export class TenancyService {
       throw new BadRequestException('Xác nhận không khớp mã hoặc tên doanh nghiệp.');
     }
 
+    if (tenant.logoUrl) await this.storage.removeTenantLogo(tenant.id);
     await this.dataSource.transaction(async (manager) => {
       await manager.getRepository(TenantMembershipEntity).delete({ tenantId: tenant.id });
       await manager.getRepository(TenantEntity).delete(tenant.id);
@@ -750,6 +787,24 @@ export class TenancyService {
         ...(modules ?? DEFAULT_TENANT_MODULES),
       ]),
     ];
+  }
+
+  private assertTenantLogo(file: { buffer: Buffer; mimetype: string; size: number } | undefined): asserts file is { buffer: Buffer; mimetype: string; size: number } {
+    if (!file) {
+      throw new BadRequestException('Vui lòng chọn tệp logo.');
+    }
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const isPng = file.buffer.subarray(0, 8).equals(png);
+    const isJpeg = file.buffer[0] === 0xff && file.buffer[1] === 0xd8 && file.buffer[2] === 0xff;
+    const isWebp = file.buffer.subarray(0, 4).toString() === 'RIFF' && file.buffer.subarray(8, 12).toString() === 'WEBP';
+    const expected = {
+      'image/png': isPng,
+      'image/jpeg': isJpeg,
+      'image/webp': isWebp,
+    }[file.mimetype];
+    if (!file.size || file.size > 2 * 1024 * 1024 || !expected) {
+      throw new BadRequestException('Logo phải là tệp PNG, JPG hoặc WebP hợp lệ, tối đa 2 MB.');
+    }
   }
 
   private record(

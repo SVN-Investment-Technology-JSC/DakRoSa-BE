@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client } from 'minio';
 
@@ -38,5 +38,43 @@ export class StorageService implements OnApplicationBootstrap {
     } catch {
       return false;
     }
+  }
+
+  async putTenantLogo(
+    tenantId: string,
+    file: Buffer,
+    contentType: string,
+  ): Promise<void> {
+    await this.client.putObject(
+      this.bucket,
+      this.tenantLogoKey(tenantId),
+      file,
+      file.length,
+      { 'Content-Type': contentType },
+    );
+  }
+
+  async getTenantLogo(tenantId: string) {
+    const key = this.tenantLogoKey(tenantId);
+    try {
+      const [stream, stat] = await Promise.all([
+        this.client.getObject(this.bucket, key),
+        this.client.statObject(this.bucket, key),
+      ]);
+      return {
+        stream,
+        contentType: stat.metaData['content-type'] ?? 'application/octet-stream',
+      };
+    } catch {
+      throw new NotFoundException('Không tìm thấy logo doanh nghiệp.');
+    }
+  }
+
+  async removeTenantLogo(tenantId: string): Promise<void> {
+    await this.client.removeObject(this.bucket, this.tenantLogoKey(tenantId));
+  }
+
+  private tenantLogoKey(tenantId: string): string {
+    return `tenant-logos/${tenantId}/logo`;
   }
 }

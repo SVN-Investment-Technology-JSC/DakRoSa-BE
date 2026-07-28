@@ -7,8 +7,11 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { PlatformAdminGuard } from '../auth/guards/platform-admin.guard';
 import {
@@ -88,6 +91,26 @@ export class PlatformTenancyController {
     @ClientContextParam() context: ClientContext,
   ) {
     return this.service.permanentlyDeletePlatformTenant(id, dto.confirmation, actor, context);
+  }
+
+  @Post(':id/logo')
+  @UseInterceptors(FileInterceptor('logo', { limits: { fileSize: 2 * 1024 * 1024 } }))
+  uploadLogo(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: { buffer: Buffer; mimetype: string; size: number } | undefined,
+    @CurrentUser() actor: AuthUser,
+    @ClientContextParam() context: ClientContext,
+  ) {
+    return this.service.uploadPlatformTenantLogo(id, file, actor, context);
+  }
+
+  @Delete(':id/logo')
+  removeLogo(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthUser,
+    @ClientContextParam() context: ClientContext,
+  ) {
+    return this.service.removePlatformTenantLogo(id, actor, context);
   }
 
   @Post(':tenantId/admins')

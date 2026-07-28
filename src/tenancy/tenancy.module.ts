@@ -14,6 +14,7 @@ import { AuditModule } from '../audit/audit.module';
 import { PlatformAdminGuard } from '../auth/guards/platform-admin.guard';
 import { TenantModuleGuard } from '../auth/guards/tenant-module.guard';
 import { PlatformTenancyController } from './platform-tenancy.controller';
+import { TenantAssetsController } from './tenant-assets.controller';
 import { TenancyController } from './tenancy.controller';
 import { TenancyService } from './tenancy.service';
 
@@ -31,7 +32,7 @@ import { TenancyService } from './tenancy.service';
     ]),
     AuditModule,
   ],
-  controllers: [TenancyController, PlatformTenancyController],
+  controllers: [TenancyController, PlatformTenancyController, TenantAssetsController],
   providers: [TenancyService, PlatformAdminGuard, TenantModuleGuard],
   exports: [TenancyService],
 })

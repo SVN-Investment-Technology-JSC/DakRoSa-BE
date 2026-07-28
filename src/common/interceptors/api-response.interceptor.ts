@@ -2,6 +2,7 @@ import {
   CallHandler,
   ExecutionContext,
   Injectable,
+  StreamableFile,
   Logger,
   NestInterceptor,
 } from '@nestjs/common';
@@ -24,6 +25,7 @@ export class ApiResponseInterceptor implements NestInterceptor {
         );
       }),
       map((data: unknown) => {
+        if (data instanceof StreamableFile) return data;
         if (response.statusCode === 204) return data;
         return {
           success: true,
