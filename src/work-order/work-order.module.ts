@@ -6,6 +6,8 @@ import {
   WorkOrderEntity,
   WorkOrderLogEntity,
   WorkOrderMaterialEntity,
+  MaterialInventoryEntity,
+  InventoryTransactionEntity,
 } from '../database/entities';
 
 @Module({
@@ -14,6 +16,8 @@ import {
       WorkOrderEntity,
       WorkOrderLogEntity,
       WorkOrderMaterialEntity,
+      MaterialInventoryEntity,
+      InventoryTransactionEntity,
     ]),
   ],
   controllers: [WorkOrderController],

@@ -27,51 +27,54 @@ export class InventoryService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async createMaterial(createMaterialDto: CreateMaterialDto) {
+  async createMaterial(tenantId: string, createMaterialDto: CreateMaterialDto) {
     const exists = await this.materialRepository.findOne({
-      where: { code: createMaterialDto.code },
+      where: { tenantId, code: createMaterialDto.code },
     });
     if (exists)
       throw new ConflictException(
         `Material code ${createMaterialDto.code} exists`,
       );
 
-    const material = this.materialRepository.create(createMaterialDto);
+    const material = this.materialRepository.create({
+      ...createMaterialDto,
+      tenantId,
+    });
     return this.materialRepository.save(material);
   }
 
-  async getMaterials() {
-    return this.materialRepository.find();
+  async getMaterials(tenantId: string) {
+    return this.materialRepository.find({ where: { tenantId } });
   }
 
-  async getInventory(warehouseId?: string) {
-    const where = warehouseId ? { warehouseId } : {};
+  async getInventory(tenantId: string, warehouseId?: string) {
+    const where = warehouseId ? { tenantId, warehouseId } : { tenantId };
     return this.inventoryRepository.find({
       where,
       relations: ['warehouse', 'material'],
     });
   }
 
-  async executeTransaction(dto: InventoryTransactionDto, userId?: string) {
+  async executeTransaction(tenantId: string, dto: InventoryTransactionDto, userId?: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
       const warehouse = await queryRunner.manager.findOne(WarehouseEntity, {
-        where: { id: dto.warehouseId },
+        where: { tenantId, id: dto.warehouseId },
       });
       if (!warehouse) throw new NotFoundException('Warehouse not found');
 
       const material = await queryRunner.manager.findOne(MaterialEntity, {
-        where: { id: dto.materialId },
+        where: { tenantId, id: dto.materialId },
       });
       if (!material) throw new NotFoundException('Material not found');
 
       let inventory = await queryRunner.manager.findOne(
         MaterialInventoryEntity,
         {
-          where: { warehouseId: dto.warehouseId, materialId: dto.materialId },
+          where: { tenantId, warehouseId: dto.warehouseId, materialId: dto.materialId },
           lock: { mode: 'pessimistic_write' },
         },
       );
@@ -81,6 +84,7 @@ export class InventoryService {
           throw new BadRequestException('Cannot export from empty inventory');
         }
         inventory = queryRunner.manager.create(MaterialInventoryEntity, {
+          tenantId,
           warehouseId: dto.warehouseId,
           materialId: dto.materialId,
           quantity: 0,
@@ -103,6 +107,7 @@ export class InventoryService {
       const transaction = queryRunner.manager.create(
         InventoryTransactionEntity,
         {
+          tenantId,
           warehouseId: dto.warehouseId,
           materialId: dto.materialId,
           type: dto.type,
@@ -125,12 +130,13 @@ export class InventoryService {
     }
   }
 
-  async getLowStockAlerts() {
+  async getLowStockAlerts(tenantId: string) {
     const qb = this.inventoryRepository
       .createQueryBuilder('inv')
       .leftJoinAndSelect('inv.material', 'mat')
       .leftJoinAndSelect('inv.warehouse', 'wh')
-      .where('inv.quantity <= mat.min_stock');
+      .where('inv.tenant_id = :tenantId', { tenantId })
+      .andWhere('inv.quantity <= mat.min_stock');
     return qb.getMany();
   }
 }

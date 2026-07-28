@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { TenantEntity } from './tenant.entity';
 import { MaterialEntity } from './material.entity';
 import { WarehouseEntity } from './warehouse.entity';
 
@@ -14,6 +15,14 @@ import { WarehouseEntity } from './warehouse.entity';
 export class MaterialInventoryEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Column({ name: 'tenant_id', type: 'uuid' })
+  tenantId!: string;
+
+  @ManyToOne(() => TenantEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'tenant_id' })
+  tenant!: TenantEntity;
+
 
   @Column({ name: 'warehouse_id', type: 'uuid' })
   warehouseId!: string;

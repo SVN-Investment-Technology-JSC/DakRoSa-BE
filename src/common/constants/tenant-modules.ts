@@ -11,6 +11,7 @@ export const TENANT_MODULES = [
   'kpi',
   'project-management',
   'internal-administration',
+  'cmms',
 ] as const;
 
 export type TenantModuleKey = (typeof TENANT_MODULES)[number];
@@ -36,4 +37,5 @@ export const TENANT_MODULE_LABELS: Record<TenantModuleKey, string> = {
   kpi: 'KPI',
   'project-management': 'Quản lý dự án',
   'internal-administration': 'Hành chính nội bộ',
+  cmms: 'EAM / CMMS',
 };

@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Param, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { InventoryService } from './inventory.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { InventoryTransactionDto } from './dto/inventory-transaction.dto';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
-import { Request } from 'express';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuthUser } from '../common/interfaces/auth-user.interface';
 
 @ApiTags('Inventory')
 @ApiBearerAuth()
@@ -15,15 +16,21 @@ export class InventoryController {
   @Post('materials')
   @RequirePermissions('inventory.create')
   @ApiOperation({ summary: 'Create new material' })
-  createMaterial(@Body() createMaterialDto: CreateMaterialDto) {
-    return this.inventoryService.createMaterial(createMaterialDto);
+  createMaterial(
+    @Body() createMaterialDto: CreateMaterialDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.inventoryService.createMaterial(
+      user.tenantId,
+      createMaterialDto,
+    );
   }
 
   @Get('materials')
   @RequirePermissions('inventory.view')
   @ApiOperation({ summary: 'Get all materials' })
-  getMaterials() {
-    return this.inventoryService.getMaterials();
+  getMaterials(@CurrentUser() user: AuthUser) {
+    return this.inventoryService.getMaterials(user.tenantId);
   }
 
   @Get(['stock', 'stock/:warehouseId'])
@@ -31,15 +38,18 @@ export class InventoryController {
   @ApiOperation({
     summary: 'Get current stock in all warehouses or a specific one',
   })
-  getInventory(@Param('warehouseId') warehouseId?: string) {
-    return this.inventoryService.getInventory(warehouseId);
+  getInventory(
+    @CurrentUser() user: AuthUser,
+    @Param('warehouseId') warehouseId?: string,
+  ) {
+    return this.inventoryService.getInventory(user.tenantId, warehouseId);
   }
 
   @Get('alerts/low-stock')
   @RequirePermissions('inventory.view')
   @ApiOperation({ summary: 'Get low stock alerts based on minStock' })
-  getLowStockAlerts() {
-    return this.inventoryService.getLowStockAlerts();
+  getLowStockAlerts(@CurrentUser() user: AuthUser) {
+    return this.inventoryService.getLowStockAlerts(user.tenantId);
   }
 
   @Post('transactions')
@@ -47,10 +57,12 @@ export class InventoryController {
   @ApiOperation({ summary: 'Execute an inventory transaction (IMPORT/EXPORT)' })
   executeTransaction(
     @Body() dto: InventoryTransactionDto,
-    @Req() req: Request,
+    @CurrentUser() user: AuthUser,
   ) {
-    // In a real app, user is extracted from req.user
-    const user = req.user as { id: string };
-    return this.inventoryService.executeTransaction(dto, user?.id);
+    return this.inventoryService.executeTransaction(
+      user.tenantId,
+      dto,
+      user.id,
+    );
   }
 }

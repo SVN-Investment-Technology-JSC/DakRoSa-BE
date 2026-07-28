@@ -12,32 +12,35 @@ export class MaintenanceService {
     private readonly planRepo: Repository<MaintenancePlanEntity>,
   ) {}
 
-  create(createDto: CreateMaintenanceDto) {
-    const plan = this.planRepo.create(createDto);
+  create(tenantId: string, createDto: CreateMaintenanceDto) {
+    const plan = this.planRepo.create({
+      ...createDto,
+      tenantId,
+    });
     return this.planRepo.save(plan);
   }
 
-  findAll() {
-    return this.planRepo.find({ relations: ['equipment'] });
+  findAll(tenantId: string) {
+    return this.planRepo.find({ where: { tenantId }, relations: ['equipment'] });
   }
 
-  async findOne(id: string) {
+  async findOne(tenantId: string, id: string) {
     const plan = await this.planRepo.findOne({
-      where: { id },
+      where: { tenantId, id },
       relations: ['equipment'],
     });
     if (!plan) throw new NotFoundException('Maintenance plan not found');
     return plan;
   }
 
-  async update(id: string, updateDto: UpdateMaintenanceDto) {
-    const plan = await this.findOne(id);
+  async update(tenantId: string, id: string, updateDto: UpdateMaintenanceDto) {
+    const plan = await this.findOne(tenantId, id);
     Object.assign(plan, updateDto);
     return this.planRepo.save(plan);
   }
 
-  async remove(id: string) {
-    const plan = await this.findOne(id);
+  async remove(tenantId: string, id: string) {
+    const plan = await this.findOne(tenantId, id);
     await this.planRepo.remove(plan);
     return { success: true };
   }

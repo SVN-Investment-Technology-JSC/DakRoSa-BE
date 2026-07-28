@@ -8,11 +8,20 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { TenantEntity } from './tenant.entity';
 
 @Entity({ name: 'equipments' })
 export class EquipmentEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Column({ name: 'tenant_id', type: 'uuid' })
+  tenantId!: string;
+
+  @ManyToOne(() => TenantEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'tenant_id' })
+  tenant!: TenantEntity;
+
 
   @Column({ name: 'parent_id', type: 'uuid', nullable: true })
   parentId!: string | null;

@@ -1,15 +1,24 @@
-import {
+import { JoinColumn,  ManyToOne, 
   Column,
   CreateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
+  } from 'typeorm';
+import { TenantEntity } from './tenant.entity';
 
 @Entity({ name: 'warehouses' })
 export class WarehouseEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Column({ name: 'tenant_id', type: 'uuid' })
+  tenantId!: string;
+
+  @ManyToOne(() => TenantEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'tenant_id' })
+  tenant!: TenantEntity;
+
 
   @Column({ unique: true, length: 50 })
   code!: string;

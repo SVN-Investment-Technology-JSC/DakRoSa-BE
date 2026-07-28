@@ -6,6 +6,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { TenantEntity } from './tenant.entity';
 import { WorkOrderEntity } from './work-order.entity';
 import { UserEntity } from './user.entity';
 
@@ -13,6 +14,14 @@ import { UserEntity } from './user.entity';
 export class WorkOrderLogEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Column({ name: 'tenant_id', type: 'uuid' })
+  tenantId!: string;
+
+  @ManyToOne(() => TenantEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'tenant_id' })
+  tenant!: TenantEntity;
+
 
   @Column({ name: 'work_order_id', type: 'uuid' })
   workOrderId!: string;

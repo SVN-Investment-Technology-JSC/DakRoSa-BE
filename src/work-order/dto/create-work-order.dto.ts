@@ -46,4 +46,9 @@ export class CreateWorkOrderDto {
   @IsOptional()
   @IsUUID()
   assigneeId?: string;
+
+  @ApiPropertyOptional({ description: 'Priority level' })
+  @IsOptional()
+  @IsString()
+  priority?: string;
 }

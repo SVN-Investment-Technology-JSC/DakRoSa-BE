@@ -18,9 +18,9 @@ export class EquipmentService {
     private readonly equipmentDocumentRepository: Repository<EquipmentDocumentEntity>,
   ) {}
 
-  async create(createEquipmentDto: CreateEquipmentDto) {
+  async create(tenantId: string, createEquipmentDto: CreateEquipmentDto) {
     const exists = await this.equipmentRepository.findOne({
-      where: { code: createEquipmentDto.code },
+      where: { tenantId, code: createEquipmentDto.code },
     });
     if (exists) {
       throw new ConflictException(
@@ -31,7 +31,7 @@ export class EquipmentService {
     let parent = null;
     if (createEquipmentDto.parentId) {
       parent = await this.equipmentRepository.findOne({
-        where: { id: createEquipmentDto.parentId },
+        where: { tenantId, id: createEquipmentDto.parentId },
       });
       if (!parent) throw new NotFoundException('Parent equipment not found');
     }
@@ -39,19 +39,20 @@ export class EquipmentService {
     const equipment = this.equipmentRepository.create({
       ...createEquipmentDto,
       parent,
+      tenantId,
     });
 
     return this.equipmentRepository.save(equipment);
   }
 
-  findAll() {
-    return this.equipmentRepository.find({ relations: ['children'] });
+  findAll(tenantId: string) {
+    return this.equipmentRepository.find({ where: { tenantId }, relations: ['children'] });
   }
 
-  async findTree() {
+  async findTree(tenantId: string) {
     // Basic tree fetch (all roots and their relations)
     const roots = await this.equipmentRepository.find({
-      where: { parentId: IsNull() },
+      where: { tenantId, parentId: IsNull() },
       relations: ['children'],
     });
 
@@ -61,7 +62,7 @@ export class EquipmentService {
     const loadChildren = async (items: EquipmentEntity[]) => {
       for (const item of items) {
         const fullItem = await this.equipmentRepository.findOne({
-          where: { id: item.id },
+          where: { tenantId, id: item.id },
           relations: ['children'],
         });
         if (fullItem && fullItem.children?.length) {
@@ -74,21 +75,21 @@ export class EquipmentService {
     return roots;
   }
 
-  async findOne(id: string) {
+  async findOne(tenantId: string, id: string) {
     const equipment = await this.equipmentRepository.findOne({
-      where: { id },
+      where: { tenantId, id },
       relations: ['parent', 'children'],
     });
     if (!equipment) throw new NotFoundException('Equipment not found');
     return equipment;
   }
 
-  async update(id: string, updateEquipmentDto: UpdateEquipmentDto) {
-    const equipment = await this.findOne(id);
+  async update(tenantId: string, id: string, updateEquipmentDto: UpdateEquipmentDto) {
+    const equipment = await this.findOne(tenantId, id);
 
     if (updateEquipmentDto.code && updateEquipmentDto.code !== equipment.code) {
       const exists = await this.equipmentRepository.findOne({
-        where: { code: updateEquipmentDto.code },
+        where: { tenantId, code: updateEquipmentDto.code },
       });
       if (exists)
         throw new ConflictException(
@@ -101,7 +102,7 @@ export class EquipmentService {
         equipment.parent = null;
       } else {
         const parent = await this.equipmentRepository.findOne({
-          where: { id: updateEquipmentDto.parentId },
+          where: { tenantId, id: updateEquipmentDto.parentId },
         });
         if (!parent) throw new NotFoundException('Parent equipment not found');
         equipment.parent = parent;
@@ -112,9 +113,31 @@ export class EquipmentService {
     return this.equipmentRepository.save(equipment);
   }
 
-  async remove(id: string) {
-    const equipment = await this.findOne(id);
+  async remove(tenantId: string, id: string) {
+    const equipment = await this.findOne(tenantId, id);
     await this.equipmentRepository.remove(equipment);
+    return { success: true };
+  }
+
+  async addDocument(tenantId: string, equipmentId: string, documentData: { name: string; type?: string; fileUrl: string; description?: string }) {
+    const equipment = await this.findOne(tenantId, equipmentId);
+    const doc = this.equipmentDocumentRepository.create({
+      ...documentData,
+      equipmentId: equipment.id,
+    });
+    return this.equipmentDocumentRepository.save(doc);
+  }
+
+  async getDocuments(tenantId: string, equipmentId: string) {
+    const equipment = await this.findOne(tenantId, equipmentId);
+    return this.equipmentDocumentRepository.find({ where: { equipmentId: equipment.id } });
+  }
+
+  async removeDocument(tenantId: string, equipmentId: string, docId: string) {
+    const equipment = await this.findOne(tenantId, equipmentId);
+    const doc = await this.equipmentDocumentRepository.findOne({ where: { id: docId, equipmentId: equipment.id } });
+    if (!doc) throw new NotFoundException('Document not found');
+    await this.equipmentDocumentRepository.remove(doc);
     return { success: true };
   }
 }

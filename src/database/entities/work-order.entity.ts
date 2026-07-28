@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { TenantEntity } from './tenant.entity';
 import { EquipmentEntity } from './equipment.entity';
 import { UserEntity } from './user.entity';
 
@@ -27,6 +28,14 @@ export enum WorkOrderStatus {
 export class WorkOrderEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Column({ name: 'tenant_id', type: 'uuid' })
+  tenantId!: string;
+
+  @ManyToOne(() => TenantEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'tenant_id' })
+  tenant!: TenantEntity;
+
 
   @Column({ unique: true, length: 100 })
   code!: string;
@@ -79,6 +88,12 @@ export class WorkOrderEntity {
 
   @Column({ name: 'downtime_minutes', type: 'int', default: 0 })
   downtimeMinutes!: number;
+
+  @Column({ name: 'root_cause', type: 'text', nullable: true })
+  rootCause!: string | null;
+
+  @Column({ type: 'jsonb', nullable: true })
+  attachments!: string[] | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

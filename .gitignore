@@ -10,3 +10,5 @@ docker/certs/*
 !docker/certs/*.example
 logs/
 *.log
+.pnpm-store
+.pnpm-store/
