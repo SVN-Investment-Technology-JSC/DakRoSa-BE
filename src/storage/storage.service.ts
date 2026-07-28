@@ -1,6 +1,8 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client } from 'minio';
+import { extname } from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class StorageService implements OnApplicationBootstrap {
@@ -38,5 +40,34 @@ export class StorageService implements OnApplicationBootstrap {
     } catch {
       return false;
     }
+  }
+
+  async uploadFile(
+    file: Express.Multer.File,
+    folder: string = 'general',
+  ): Promise<string> {
+    const fileExtension = extname(file.originalname);
+    const fileName = `${folder}/${uuidv4()}${fileExtension}`;
+
+    await this.client.putObject(this.bucket, fileName, file.buffer, file.size, {
+      'Content-Type': file.mimetype,
+    });
+
+    return fileName;
+  }
+
+  async getFileUrl(
+    fileName: string,
+    expirySeconds: number = 24 * 60 * 60,
+  ): Promise<string> {
+    return await this.client.presignedGetObject(
+      this.bucket,
+      fileName,
+      expirySeconds,
+    );
+  }
+
+  async deleteFile(fileName: string): Promise<void> {
+    await this.client.removeObject(this.bucket, fileName);
   }
 }
