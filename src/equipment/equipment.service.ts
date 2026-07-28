@@ -46,7 +46,10 @@ export class EquipmentService {
   }
 
   findAll(tenantId: string) {
-    return this.equipmentRepository.find({ where: { tenantId }, relations: ['children'] });
+    return this.equipmentRepository.find({
+      where: { tenantId },
+      relations: ['children'],
+    });
   }
 
   async findTree(tenantId: string) {
@@ -84,7 +87,11 @@ export class EquipmentService {
     return equipment;
   }
 
-  async update(tenantId: string, id: string, updateEquipmentDto: UpdateEquipmentDto) {
+  async update(
+    tenantId: string,
+    id: string,
+    updateEquipmentDto: UpdateEquipmentDto,
+  ) {
     const equipment = await this.findOne(tenantId, id);
 
     if (updateEquipmentDto.code && updateEquipmentDto.code !== equipment.code) {
@@ -119,7 +126,16 @@ export class EquipmentService {
     return { success: true };
   }
 
-  async addDocument(tenantId: string, equipmentId: string, documentData: { name: string; type?: string; fileUrl: string; description?: string }) {
+  async addDocument(
+    tenantId: string,
+    equipmentId: string,
+    documentData: {
+      name: string;
+      type?: string;
+      fileUrl: string;
+      description?: string;
+    },
+  ) {
     const equipment = await this.findOne(tenantId, equipmentId);
     const doc = this.equipmentDocumentRepository.create({
       ...documentData,
@@ -130,12 +146,16 @@ export class EquipmentService {
 
   async getDocuments(tenantId: string, equipmentId: string) {
     const equipment = await this.findOne(tenantId, equipmentId);
-    return this.equipmentDocumentRepository.find({ where: { equipmentId: equipment.id } });
+    return this.equipmentDocumentRepository.find({
+      where: { equipmentId: equipment.id },
+    });
   }
 
   async removeDocument(tenantId: string, equipmentId: string, docId: string) {
     const equipment = await this.findOne(tenantId, equipmentId);
-    const doc = await this.equipmentDocumentRepository.findOne({ where: { id: docId, equipmentId: equipment.id } });
+    const doc = await this.equipmentDocumentRepository.findOne({
+      where: { id: docId, equipmentId: equipment.id },
+    });
     if (!doc) throw new NotFoundException('Document not found');
     await this.equipmentDocumentRepository.remove(doc);
     return { success: true };

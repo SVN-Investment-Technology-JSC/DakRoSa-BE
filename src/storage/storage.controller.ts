@@ -7,7 +7,13 @@ import {
   Body,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 import { StorageService } from './storage.service';
 import { Express } from 'express';
 import 'multer';
@@ -45,7 +51,10 @@ export class StorageController {
       throw new BadRequestException('File is required');
     }
 
-    const fileName = await this.storageService.uploadFile(file, folder || 'general');
+    const fileName = await this.storageService.uploadFile(
+      file,
+      folder || 'general',
+    );
     const url = await this.storageService.getFileUrl(fileName);
 
     return {

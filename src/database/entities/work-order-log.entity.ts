@@ -22,7 +22,6 @@ export class WorkOrderLogEntity {
   @JoinColumn({ name: 'tenant_id' })
   tenant!: TenantEntity;
 
-
   @Column({ name: 'work_order_id', type: 'uuid' })
   workOrderId!: string;
 

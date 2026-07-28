@@ -87,7 +87,7 @@ export class DashboardController {
         (SELECT COUNT(*) FROM work_orders WHERE tenant_id = $1 AND type = 'INCIDENT' AND created_at >= now() - interval '30 days')::text AS incidents_last_30_days,
         (SELECT COUNT(*) FROM work_orders WHERE tenant_id = $1 AND type = 'MAINTENANCE' AND created_at >= now() - interval '30 days')::text AS maintenances_last_30_days
       `,
-      [user.tenantId]
+      [user.tenantId],
     );
 
     const row = result[0];
@@ -105,14 +105,16 @@ export class DashboardController {
       GROUP BY date
       ORDER BY date ASC
       `,
-      [user.tenantId]
+      [user.tenantId],
     );
 
     const last7Days = Array.from({ length: 7 }).map((_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
       const dateStr = d.toISOString().split('T')[0];
-      const found = chartResult.find(c => new Date(c.date).toISOString().split('T')[0] === dateStr);
+      const found = chartResult.find(
+        (c) => new Date(c.date).toISOString().split('T')[0] === dateStr,
+      );
       return {
         date: dateStr,
         downtime: found ? Number(found.downtime) : 0,

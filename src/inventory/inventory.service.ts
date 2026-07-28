@@ -55,7 +55,11 @@ export class InventoryService {
     });
   }
 
-  async executeTransaction(tenantId: string, dto: InventoryTransactionDto, userId?: string) {
+  async executeTransaction(
+    tenantId: string,
+    dto: InventoryTransactionDto,
+    userId?: string,
+  ) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -74,7 +78,11 @@ export class InventoryService {
       let inventory = await queryRunner.manager.findOne(
         MaterialInventoryEntity,
         {
-          where: { tenantId, warehouseId: dto.warehouseId, materialId: dto.materialId },
+          where: {
+            tenantId,
+            warehouseId: dto.warehouseId,
+            materialId: dto.materialId,
+          },
           lock: { mode: 'pessimistic_write' },
         },
       );

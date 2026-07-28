@@ -21,7 +21,10 @@ export class MaintenanceService {
   }
 
   findAll(tenantId: string) {
-    return this.planRepo.find({ where: { tenantId }, relations: ['equipment'] });
+    return this.planRepo.find({
+      where: { tenantId },
+      relations: ['equipment'],
+    });
   }
 
   async findOne(tenantId: string, id: string) {

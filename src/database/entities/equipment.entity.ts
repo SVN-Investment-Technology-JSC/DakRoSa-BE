@@ -22,7 +22,6 @@ export class EquipmentEntity {
   @JoinColumn({ name: 'tenant_id' })
   tenant!: TenantEntity;
 
-
   @Column({ name: 'parent_id', type: 'uuid', nullable: true })
   parentId!: string | null;
 

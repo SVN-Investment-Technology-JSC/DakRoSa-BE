@@ -24,7 +24,10 @@ export class EquipmentController {
   @Post()
   @RequirePermissions('equipment.create')
   @ApiOperation({ summary: 'Create new equipment' })
-  create(@CurrentUser() user: AuthUser, @Body() createEquipmentDto: CreateEquipmentDto) {
+  create(
+    @CurrentUser() user: AuthUser,
+    @Body() createEquipmentDto: CreateEquipmentDto,
+  ) {
     return this.equipmentService.create(user.tenantId, createEquipmentDto);
   }
 
@@ -66,7 +69,13 @@ export class EquipmentController {
   addDocument(
     @CurrentUser() user: AuthUser,
     @Param('id') id: string,
-    @Body() documentData: { name: string; type?: string; fileUrl: string; description?: string },
+    @Body()
+    documentData: {
+      name: string;
+      type?: string;
+      fileUrl: string;
+      description?: string;
+    },
   ) {
     return this.equipmentService.addDocument(user.tenantId, id, documentData);
   }

@@ -23,7 +23,6 @@ export class MaterialInventoryEntity {
   @JoinColumn({ name: 'tenant_id' })
   tenant!: TenantEntity;
 
-
   @Column({ name: 'warehouse_id', type: 'uuid' })
   warehouseId!: string;
 

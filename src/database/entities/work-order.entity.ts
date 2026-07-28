@@ -36,7 +36,6 @@ export class WorkOrderEntity {
   @JoinColumn({ name: 'tenant_id' })
   tenant!: TenantEntity;
 
-
   @Column({ unique: true, length: 100 })
   code!: string;
 

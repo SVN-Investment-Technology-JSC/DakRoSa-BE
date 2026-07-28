@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { WorkOrderService } from './work-order.service';
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
@@ -37,7 +45,10 @@ export class WorkOrderController {
   @Get('equipment/:equipmentId')
   @RequirePermissions('work_order.view')
   @ApiOperation({ summary: 'Get work orders by equipment' })
-  findByEquipment(@Param('equipmentId') equipmentId: string, @CurrentUser() user: AuthUser) {
+  findByEquipment(
+    @Param('equipmentId') equipmentId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
     return this.workOrderService.findByEquipment(user.tenantId, equipmentId);
   }
 
@@ -67,7 +78,14 @@ export class WorkOrderController {
     @Body() dto: { materialId: string; warehouseId: string; quantity: number },
     @CurrentUser() user: AuthUser,
   ) {
-    return this.workOrderService.addMaterial(user.tenantId, id, dto.materialId, dto.warehouseId, dto.quantity, user.id);
+    return this.workOrderService.addMaterial(
+      user.tenantId,
+      id,
+      dto.materialId,
+      dto.warehouseId,
+      dto.quantity,
+      user.id,
+    );
   }
 
   @Delete(':id/materials/:warehouseId/:materialId')
@@ -79,7 +97,13 @@ export class WorkOrderController {
     @Param('materialId') materialId: string,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.workOrderService.removeMaterial(user.tenantId, id, materialId, warehouseId, user.id);
+    return this.workOrderService.removeMaterial(
+      user.tenantId,
+      id,
+      materialId,
+      warehouseId,
+      user.id,
+    );
   }
 
   @Get(':id/logs')

@@ -42,23 +42,29 @@ export class StorageService implements OnApplicationBootstrap {
     }
   }
 
-  async uploadFile(file: Express.Multer.File, folder: string = 'general'): Promise<string> {
+  async uploadFile(
+    file: Express.Multer.File,
+    folder: string = 'general',
+  ): Promise<string> {
     const fileExtension = extname(file.originalname);
     const fileName = `${folder}/${uuidv4()}${fileExtension}`;
 
-    await this.client.putObject(
-      this.bucket,
-      fileName,
-      file.buffer,
-      file.size,
-      { 'Content-Type': file.mimetype }
-    );
+    await this.client.putObject(this.bucket, fileName, file.buffer, file.size, {
+      'Content-Type': file.mimetype,
+    });
 
     return fileName;
   }
 
-  async getFileUrl(fileName: string, expirySeconds: number = 24 * 60 * 60): Promise<string> {
-    return await this.client.presignedGetObject(this.bucket, fileName, expirySeconds);
+  async getFileUrl(
+    fileName: string,
+    expirySeconds: number = 24 * 60 * 60,
+  ): Promise<string> {
+    return await this.client.presignedGetObject(
+      this.bucket,
+      fileName,
+      expirySeconds,
+    );
   }
 
   async deleteFile(fileName: string): Promise<void> {

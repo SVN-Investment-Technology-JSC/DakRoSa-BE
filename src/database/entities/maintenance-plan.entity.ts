@@ -22,7 +22,6 @@ export class MaintenancePlanEntity {
   @JoinColumn({ name: 'tenant_id' })
   tenant!: TenantEntity;
 
-
   @Column({ name: 'equipment_id', type: 'uuid' })
   equipmentId!: string;
 

@@ -31,7 +31,11 @@ export class WorkOrderService {
     private readonly transactionRepo: Repository<InventoryTransactionEntity>,
   ) {}
 
-  async create(tenantId: string, createWorkOrderDto: CreateWorkOrderDto, userId?: string) {
+  async create(
+    tenantId: string,
+    createWorkOrderDto: CreateWorkOrderDto,
+    userId?: string,
+  ) {
     const exists = await this.workOrderRepo.findOne({
       where: { tenantId, code: createWorkOrderDto.code },
     });
@@ -84,7 +88,12 @@ export class WorkOrderService {
     });
   }
 
-  async update(tenantId: string, id: string, updateDto: UpdateWorkOrderDto, userId?: string) {
+  async update(
+    tenantId: string,
+    id: string,
+    updateDto: UpdateWorkOrderDto,
+    userId?: string,
+  ) {
     const wo = await this.findOne(tenantId, id);
 
     if (updateDto.status && wo.status !== updateDto.status) {
@@ -127,9 +136,16 @@ export class WorkOrderService {
     });
   }
 
-  async addMaterial(tenantId: string, id: string, materialId: string, warehouseId: string, quantity: number, userId: string) {
+  async addMaterial(
+    tenantId: string,
+    id: string,
+    materialId: string,
+    warehouseId: string,
+    quantity: number,
+    userId: string,
+  ) {
     const wo = await this.findOne(tenantId, id);
-    
+
     // Check inventory
     const inventory = await this.inventoryRepo.findOne({
       where: { tenantId, materialId, warehouseId },
@@ -169,11 +185,17 @@ export class WorkOrderService {
         quantity,
       });
     }
-    
+
     return this.woMaterialRepo.save(woMat);
   }
 
-  async removeMaterial(tenantId: string, id: string, materialId: string, warehouseId: string, userId: string) {
+  async removeMaterial(
+    tenantId: string,
+    id: string,
+    materialId: string,
+    warehouseId: string,
+    userId: string,
+  ) {
     const wo = await this.findOne(tenantId, id);
     const woMat = await this.woMaterialRepo.findOne({
       where: { workOrderId: wo.id, materialId, warehouseId },
