@@ -253,9 +253,20 @@ export class TenancyService {
   async listPlatformTenants() {
     return this.tenants
       .createQueryBuilder('tenant')
+      .where('tenant.status = :status', { status: 'active' })
       .loadRelationCountAndMap('tenant.siteCount', 'tenant.sites')
       .loadRelationCountAndMap('tenant.memberCount', 'tenant.memberships')
       .orderBy('tenant.createdAt', 'DESC')
+      .getMany();
+  }
+
+  async listArchivedPlatformTenants() {
+    return this.tenants
+      .createQueryBuilder('tenant')
+      .where('tenant.status = :status', { status: 'archived' })
+      .loadRelationCountAndMap('tenant.siteCount', 'tenant.sites')
+      .loadRelationCountAndMap('tenant.memberCount', 'tenant.memberships')
+      .orderBy('tenant.updatedAt', 'DESC')
       .getMany();
   }
 
@@ -418,6 +429,59 @@ export class TenancyService {
       tenant.id,
     );
     return tenant;
+  }
+
+  async archivePlatformTenant(
+    id: string,
+    actor: AuthUser,
+    context: ClientContext,
+  ): Promise<void> {
+    if (actor.tenantId === id) {
+      throw new BadRequestException(
+        'Không thể xóa doanh nghiệp đang được dùng trong phiên hiện tại.',
+      );
+    }
+
+    const tenant = await this.findTenant(id);
+    tenant.status = 'archived';
+    await this.tenants.save(tenant);
+    await this.record(actor, context, 'delete', 'tenant', tenant.id, undefined, tenant.id);
+  }
+
+  async restorePlatformTenant(
+    id: string,
+    actor: AuthUser,
+    context: ClientContext,
+  ): Promise<TenantEntity> {
+    const tenant = await this.tenants.findOneBy({ id, status: 'archived' });
+    if (!tenant) throw new NotFoundException('Không tìm thấy doanh nghiệp đã lưu trữ.');
+    tenant.status = 'active';
+    await this.tenants.save(tenant);
+    await this.record(actor, context, 'restore', 'tenant', tenant.id, undefined, tenant.id);
+    return tenant;
+  }
+
+  async permanentlyDeletePlatformTenant(
+    id: string,
+    confirmation: string,
+    actor: AuthUser,
+    context: ClientContext,
+  ): Promise<void> {
+    const tenant = await this.tenants.findOneBy({ id, status: 'archived' });
+    if (!tenant) throw new NotFoundException('Chỉ có thể xóa vĩnh viễn doanh nghiệp đã lưu trữ.');
+    const confirmedValue = confirmation.trim();
+    if (confirmedValue !== tenant.code && confirmedValue !== tenant.name) {
+      throw new BadRequestException('Xác nhận không khớp mã hoặc tên doanh nghiệp.');
+    }
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(TenantMembershipEntity).delete({ tenantId: tenant.id });
+      await manager.getRepository(TenantEntity).delete(tenant.id);
+    });
+    await this.record(actor, context, 'permanently_delete', 'tenant', tenant.id, {
+      code: tenant.code,
+      name: tenant.name,
+    });
   }
 
   async createPlatformTenantAdmin(
