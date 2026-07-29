@@ -1,8 +1,13 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnApplicationBootstrap,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client } from 'minio';
 import { extname } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class StorageService implements OnApplicationBootstrap {
@@ -46,12 +51,26 @@ export class StorageService implements OnApplicationBootstrap {
     file: Express.Multer.File,
     folder: string = 'general',
   ): Promise<string> {
-    const fileExtension = extname(file.originalname);
-    const fileName = `${folder}/${uuidv4()}${fileExtension}`;
+    const multerFile = file as unknown as Record<string, unknown>;
+    const fileExtension = extname(
+      typeof multerFile['originalname'] === 'string'
+        ? multerFile['originalname']
+        : 'file',
+    );
+    const fileName = `${folder}/${randomUUID()}${fileExtension}`;
 
-    await this.client.putObject(this.bucket, fileName, file.buffer, file.size, {
-      'Content-Type': file.mimetype,
-    });
+    await this.client.putObject(
+      this.bucket,
+      fileName,
+      multerFile['buffer'] as Buffer,
+      Number(multerFile['size'] ?? 0),
+      {
+        'Content-Type':
+          typeof multerFile['mimetype'] === 'string'
+            ? multerFile['mimetype']
+            : 'application/octet-stream',
+      },
+    );
 
     return fileName;
   }
@@ -69,5 +88,43 @@ export class StorageService implements OnApplicationBootstrap {
 
   async deleteFile(fileName: string): Promise<void> {
     await this.client.removeObject(this.bucket, fileName);
+  }
+  async putTenantLogo(
+    tenantId: string,
+    file: Buffer,
+    contentType: string,
+  ): Promise<void> {
+    await this.client.putObject(
+      this.bucket,
+      this.tenantLogoKey(tenantId),
+      file,
+      file.length,
+      { 'Content-Type': contentType },
+    );
+  }
+
+  async getTenantLogo(tenantId: string) {
+    const key = this.tenantLogoKey(tenantId);
+    try {
+      const [stream, stat] = await Promise.all([
+        this.client.getObject(this.bucket, key),
+        this.client.statObject(this.bucket, key),
+      ]);
+      const meta = stat.metaData as Record<string, string> | undefined;
+      return {
+        stream,
+        contentType: meta?.['content-type'] ?? 'application/octet-stream',
+      };
+    } catch {
+      throw new NotFoundException('Không tìm thấy logo doanh nghiệp.');
+    }
+  }
+
+  async removeTenantLogo(tenantId: string): Promise<void> {
+    await this.client.removeObject(this.bucket, this.tenantLogoKey(tenantId));
+  }
+
+  private tenantLogoKey(tenantId: string): string {
+    return `tenant-logos/${tenantId}/logo`;
   }
 }
