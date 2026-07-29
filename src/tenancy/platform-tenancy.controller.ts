@@ -90,14 +90,22 @@ export class PlatformTenancyController {
     @CurrentUser() actor: AuthUser,
     @ClientContextParam() context: ClientContext,
   ) {
-    return this.service.permanentlyDeletePlatformTenant(id, dto.confirmation, actor, context);
+    return this.service.permanentlyDeletePlatformTenant(
+      id,
+      dto.confirmation,
+      actor,
+      context,
+    );
   }
 
   @Post(':id/logo')
-  @UseInterceptors(FileInterceptor('logo', { limits: { fileSize: 2 * 1024 * 1024 } }))
+  @UseInterceptors(
+    FileInterceptor('logo', { limits: { fileSize: 2 * 1024 * 1024 } }),
+  )
   uploadLogo(
     @Param('id', ParseUUIDPipe) id: string,
-    @UploadedFile() file: { buffer: Buffer; mimetype: string; size: number } | undefined,
+    @UploadedFile()
+    file: { buffer: Buffer; mimetype: string; size: number } | undefined,
     @CurrentUser() actor: AuthUser,
     @ClientContextParam() context: ClientContext,
   ) {

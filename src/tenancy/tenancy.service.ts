@@ -447,7 +447,15 @@ export class TenancyService {
     const tenant = await this.findTenant(id);
     tenant.status = 'archived';
     await this.tenants.save(tenant);
-    await this.record(actor, context, 'delete', 'tenant', tenant.id, undefined, tenant.id);
+    await this.record(
+      actor,
+      context,
+      'delete',
+      'tenant',
+      tenant.id,
+      undefined,
+      tenant.id,
+    );
   }
 
   async restorePlatformTenant(
@@ -456,10 +464,19 @@ export class TenancyService {
     context: ClientContext,
   ): Promise<TenantEntity> {
     const tenant = await this.tenants.findOneBy({ id, status: 'archived' });
-    if (!tenant) throw new NotFoundException('Không tìm thấy doanh nghiệp đã lưu trữ.');
+    if (!tenant)
+      throw new NotFoundException('Không tìm thấy doanh nghiệp đã lưu trữ.');
     tenant.status = 'active';
     await this.tenants.save(tenant);
-    await this.record(actor, context, 'restore', 'tenant', tenant.id, undefined, tenant.id);
+    await this.record(
+      actor,
+      context,
+      'restore',
+      'tenant',
+      tenant.id,
+      undefined,
+      tenant.id,
+    );
     return tenant;
   }
 
@@ -474,7 +491,15 @@ export class TenancyService {
     await this.storage.putTenantLogo(tenant.id, file.buffer, file.mimetype);
     tenant.logoUrl = `/api/v1/tenant-assets/${tenant.id}/logo`;
     await this.tenants.save(tenant);
-    await this.record(actor, context, 'update_logo', 'tenant', tenant.id, undefined, tenant.id);
+    await this.record(
+      actor,
+      context,
+      'update_logo',
+      'tenant',
+      tenant.id,
+      undefined,
+      tenant.id,
+    );
     return tenant;
   }
 
@@ -487,13 +512,25 @@ export class TenancyService {
     if (tenant.logoUrl) await this.storage.removeTenantLogo(tenant.id);
     tenant.logoUrl = null;
     await this.tenants.save(tenant);
-    await this.record(actor, context, 'remove_logo', 'tenant', tenant.id, undefined, tenant.id);
+    await this.record(
+      actor,
+      context,
+      'remove_logo',
+      'tenant',
+      tenant.id,
+      undefined,
+      tenant.id,
+    );
     return tenant;
   }
 
   async getTenantLogo(tenantId: string) {
-    const tenant = await this.tenants.findOneBy({ id: tenantId, status: 'active' });
-    if (!tenant?.logoUrl) throw new NotFoundException('Không tìm thấy logo doanh nghiệp.');
+    const tenant = await this.tenants.findOneBy({
+      id: tenantId,
+      status: 'active',
+    });
+    if (!tenant?.logoUrl)
+      throw new NotFoundException('Không tìm thấy logo doanh nghiệp.');
     return this.storage.getTenantLogo(tenant.id);
   }
 
@@ -504,21 +541,35 @@ export class TenancyService {
     context: ClientContext,
   ): Promise<void> {
     const tenant = await this.tenants.findOneBy({ id, status: 'archived' });
-    if (!tenant) throw new NotFoundException('Chỉ có thể xóa vĩnh viễn doanh nghiệp đã lưu trữ.');
+    if (!tenant)
+      throw new NotFoundException(
+        'Chỉ có thể xóa vĩnh viễn doanh nghiệp đã lưu trữ.',
+      );
     const confirmedValue = confirmation.trim();
     if (confirmedValue !== tenant.code && confirmedValue !== tenant.name) {
-      throw new BadRequestException('Xác nhận không khớp mã hoặc tên doanh nghiệp.');
+      throw new BadRequestException(
+        'Xác nhận không khớp mã hoặc tên doanh nghiệp.',
+      );
     }
 
     if (tenant.logoUrl) await this.storage.removeTenantLogo(tenant.id);
     await this.dataSource.transaction(async (manager) => {
-      await manager.getRepository(TenantMembershipEntity).delete({ tenantId: tenant.id });
+      await manager
+        .getRepository(TenantMembershipEntity)
+        .delete({ tenantId: tenant.id });
       await manager.getRepository(TenantEntity).delete(tenant.id);
     });
-    await this.record(actor, context, 'permanently_delete', 'tenant', tenant.id, {
-      code: tenant.code,
-      name: tenant.name,
-    });
+    await this.record(
+      actor,
+      context,
+      'permanently_delete',
+      'tenant',
+      tenant.id,
+      {
+        code: tenant.code,
+        name: tenant.name,
+      },
+    );
   }
 
   async createPlatformTenantAdmin(
@@ -789,21 +840,30 @@ export class TenancyService {
     ];
   }
 
-  private assertTenantLogo(file: { buffer: Buffer; mimetype: string; size: number } | undefined): asserts file is { buffer: Buffer; mimetype: string; size: number } {
+  private assertTenantLogo(
+    file: { buffer: Buffer; mimetype: string; size: number } | undefined,
+  ): asserts file is { buffer: Buffer; mimetype: string; size: number } {
     if (!file) {
       throw new BadRequestException('Vui lòng chọn tệp logo.');
     }
     const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
     const isPng = file.buffer.subarray(0, 8).equals(png);
-    const isJpeg = file.buffer[0] === 0xff && file.buffer[1] === 0xd8 && file.buffer[2] === 0xff;
-    const isWebp = file.buffer.subarray(0, 4).toString() === 'RIFF' && file.buffer.subarray(8, 12).toString() === 'WEBP';
+    const isJpeg =
+      file.buffer[0] === 0xff &&
+      file.buffer[1] === 0xd8 &&
+      file.buffer[2] === 0xff;
+    const isWebp =
+      file.buffer.subarray(0, 4).toString() === 'RIFF' &&
+      file.buffer.subarray(8, 12).toString() === 'WEBP';
     const expected = {
       'image/png': isPng,
       'image/jpeg': isJpeg,
       'image/webp': isWebp,
     }[file.mimetype];
     if (!file.size || file.size > 2 * 1024 * 1024 || !expected) {
-      throw new BadRequestException('Logo phải là tệp PNG, JPG hoặc WebP hợp lệ, tối đa 2 MB.');
+      throw new BadRequestException(
+        'Logo phải là tệp PNG, JPG hoặc WebP hợp lệ, tối đa 2 MB.',
+      );
     }
   }
 

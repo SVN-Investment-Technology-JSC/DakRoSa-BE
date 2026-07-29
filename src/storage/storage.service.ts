@@ -1,8 +1,13 @@
-import { Injectable, Logger, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnApplicationBootstrap,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client } from 'minio';
 import { extname } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class StorageService implements OnApplicationBootstrap {
@@ -46,12 +51,26 @@ export class StorageService implements OnApplicationBootstrap {
     file: Express.Multer.File,
     folder: string = 'general',
   ): Promise<string> {
-    const fileExtension = extname(file.originalname);
-    const fileName = `${folder}/${uuidv4()}${fileExtension}`;
+    const multerFile = file as unknown as Record<string, unknown>;
+    const fileExtension = extname(
+      typeof multerFile['originalname'] === 'string'
+        ? multerFile['originalname']
+        : 'file',
+    );
+    const fileName = `${folder}/${randomUUID()}${fileExtension}`;
 
-    await this.client.putObject(this.bucket, fileName, file.buffer, file.size, {
-      'Content-Type': file.mimetype,
-    });
+    await this.client.putObject(
+      this.bucket,
+      fileName,
+      multerFile['buffer'] as Buffer,
+      Number(multerFile['size'] ?? 0),
+      {
+        'Content-Type':
+          typeof multerFile['mimetype'] === 'string'
+            ? multerFile['mimetype']
+            : 'application/octet-stream',
+      },
+    );
 
     return fileName;
   }
@@ -91,9 +110,10 @@ export class StorageService implements OnApplicationBootstrap {
         this.client.getObject(this.bucket, key),
         this.client.statObject(this.bucket, key),
       ]);
+      const meta = stat.metaData as Record<string, string> | undefined;
       return {
         stream,
-        contentType: stat.metaData['content-type'] ?? 'application/octet-stream',
+        contentType: meta?.['content-type'] ?? 'application/octet-stream',
       };
     } catch {
       throw new NotFoundException('Không tìm thấy logo doanh nghiệp.');

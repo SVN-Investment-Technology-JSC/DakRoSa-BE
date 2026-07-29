@@ -1,4 +1,10 @@
-import { Controller, Get, Param, ParseUUIDPipe, StreamableFile } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  StreamableFile,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
 import { TenancyService } from './tenancy.service';
@@ -11,7 +17,8 @@ export class TenantAssetsController {
   @Public()
   @Get(':tenantId/logo')
   async logo(@Param('tenantId', ParseUUIDPipe) tenantId: string) {
-    const logo = await this.service.getTenantLogo(tenantId);
+    const logo: { stream: import('stream').Readable; contentType: string } =
+      await this.service.getTenantLogo(tenantId);
     return new StreamableFile(logo.stream, {
       type: logo.contentType,
       disposition: 'inline',

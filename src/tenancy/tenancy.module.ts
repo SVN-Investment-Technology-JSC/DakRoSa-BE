@@ -32,7 +32,11 @@ import { TenancyService } from './tenancy.service';
     ]),
     AuditModule,
   ],
-  controllers: [TenancyController, PlatformTenancyController, TenantAssetsController],
+  controllers: [
+    TenancyController,
+    PlatformTenancyController,
+    TenantAssetsController,
+  ],
   providers: [TenancyService, PlatformAdminGuard, TenantModuleGuard],
   exports: [TenancyService],
 })
