@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '../common/constants/permissions';
@@ -19,6 +20,8 @@ import {
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
+import { TenantModuleGuard } from '../auth/guards/tenant-module.guard';
+import { RequireTenantModules } from '../common/decorators/tenant-module.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -27,6 +30,8 @@ import { UsersService } from './users.service';
 
 @ApiTags('Users')
 @ApiBearerAuth()
+@UseGuards(TenantModuleGuard)
+@RequireTenantModules('administration')
 @Controller({ path: 'users', version: '1' })
 export class UsersController {
   constructor(private readonly service: UsersService) {}

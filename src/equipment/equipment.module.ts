@@ -4,6 +4,7 @@ import { EquipmentEntity, EquipmentDocumentEntity } from '../database/entities';
 
 import { EquipmentService } from './equipment.service';
 import { EquipmentController } from './equipment.controller';
+import { TenantModuleGuard } from '../auth/guards/tenant-module.guard';
 
 @Module({
   imports: [
@@ -11,6 +12,6 @@ import { EquipmentController } from './equipment.controller';
   ],
   controllers: [EquipmentController],
 
-  providers: [EquipmentService],
+  providers: [EquipmentService, TenantModuleGuard],
 })
 export class EquipmentModule {}

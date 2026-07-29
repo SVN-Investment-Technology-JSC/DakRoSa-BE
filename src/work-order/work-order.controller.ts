@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { WorkOrderService } from './work-order.service';
@@ -14,9 +15,13 @@ import { UpdateWorkOrderDto } from './dto/update-work-order.dto';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
+import { TenantModuleGuard } from '../auth/guards/tenant-module.guard';
+import { RequireTenantModules } from '../common/decorators/tenant-module.decorator';
 
 @ApiTags('Work Orders')
 @ApiBearerAuth()
+@UseGuards(TenantModuleGuard)
+@RequireTenantModules('cmms')
 @Controller('work-orders')
 export class WorkOrderController {
   constructor(private readonly workOrderService: WorkOrderService) {}

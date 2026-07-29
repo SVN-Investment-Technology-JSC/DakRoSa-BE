@@ -79,6 +79,7 @@ export class TenancyService {
         kpi: enabled.has('kpi'),
         projectManagement: enabled.has('project-management'),
         internalAdministration: enabled.has('internal-administration'),
+        cmms: enabled.has('cmms'),
       },
     };
   }

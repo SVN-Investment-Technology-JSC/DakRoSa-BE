@@ -12,6 +12,7 @@ import {
 } from '../database/entities';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
+import { TenantModuleGuard } from '../auth/guards/tenant-module.guard';
 
 @Module({
   imports: [
@@ -27,6 +28,6 @@ import { UsersService } from './users.service';
     AuditModule,
   ],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService, TenantModuleGuard],
 })
 export class UsersModule {}

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { InventoryService } from './inventory.service';
 import { InventoryController } from './inventory.controller';
+import { TenantModuleGuard } from '../auth/guards/tenant-module.guard';
 import {
   WarehouseEntity,
   MaterialEntity,
@@ -19,6 +20,6 @@ import {
     ]),
   ],
   controllers: [InventoryController],
-  providers: [InventoryService],
+  providers: [InventoryService, TenantModuleGuard],
 })
 export class InventoryModule {}

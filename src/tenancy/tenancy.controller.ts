@@ -42,12 +42,16 @@ export class TenancyController {
   }
 
   @Get('settings')
+  @UseGuards(TenantModuleGuard)
+  @RequireTenantModules('administration')
   @RequirePermissions(PERMISSIONS.TENANT_SETTINGS_VIEW)
   settings(@CurrentUser() user: AuthUser) {
     return this.service.getSettings(user);
   }
 
   @Patch('settings')
+  @UseGuards(TenantModuleGuard)
+  @RequireTenantModules('administration')
   @RequirePermissions(PERMISSIONS.TENANT_SETTINGS_UPDATE)
   updateSettings(
     @Body() dto: UpdateTenantDto,
@@ -58,12 +62,16 @@ export class TenancyController {
   }
 
   @Get('sites')
+  @UseGuards(TenantModuleGuard)
+  @RequireTenantModules('administration')
   @RequirePermissions(PERMISSIONS.TENANT_SETTINGS_VIEW)
   listSites(@CurrentUser() user: AuthUser) {
     return this.service.listSites(user);
   }
 
   @Post('sites')
+  @UseGuards(TenantModuleGuard)
+  @RequireTenantModules('administration')
   @RequirePermissions(PERMISSIONS.TENANT_SETTINGS_UPDATE)
   createSite(
     @Body() dto: CreateSiteDto,
@@ -74,6 +82,8 @@ export class TenancyController {
   }
 
   @Patch('sites/:id')
+  @UseGuards(TenantModuleGuard)
+  @RequireTenantModules('administration')
   @RequirePermissions(PERMISSIONS.TENANT_SETTINGS_UPDATE)
   updateSite(
     @Param('id', ParseUUIDPipe) id: string,

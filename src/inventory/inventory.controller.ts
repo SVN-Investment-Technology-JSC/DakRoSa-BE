@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { InventoryService } from './inventory.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
@@ -6,9 +6,13 @@ import { InventoryTransactionDto } from './dto/inventory-transaction.dto';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
+import { TenantModuleGuard } from '../auth/guards/tenant-module.guard';
+import { RequireTenantModules } from '../common/decorators/tenant-module.decorator';
 
 @ApiTags('Inventory')
 @ApiBearerAuth()
+@UseGuards(TenantModuleGuard)
+@RequireTenantModules('cmms')
 @Controller('inventory')
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}

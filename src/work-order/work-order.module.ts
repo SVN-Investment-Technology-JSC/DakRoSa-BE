@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WorkOrderService } from './work-order.service';
 import { WorkOrderController } from './work-order.controller';
+import { TenantModuleGuard } from '../auth/guards/tenant-module.guard';
 import {
   WorkOrderEntity,
   WorkOrderLogEntity,
@@ -21,6 +22,6 @@ import {
     ]),
   ],
   controllers: [WorkOrderController],
-  providers: [WorkOrderService],
+  providers: [WorkOrderService, TenantModuleGuard],
 })
 export class WorkOrderModule {}
