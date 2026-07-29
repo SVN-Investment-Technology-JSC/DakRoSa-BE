@@ -70,7 +70,6 @@ export class StorageService implements OnApplicationBootstrap {
   async deleteFile(fileName: string): Promise<void> {
     await this.client.removeObject(this.bucket, fileName);
   }
-
   async putTenantLogo(
     tenantId: string,
     file: Buffer,
