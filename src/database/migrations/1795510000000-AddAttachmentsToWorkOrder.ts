@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddAttachmentsToWorkOrder1785203140901 implements MigrationInterface {
-  name = 'AddAttachmentsToWorkOrder1785203140901';
+export class AddAttachmentsToWorkOrder1795510000000 implements MigrationInterface {
+  name = 'AddAttachmentsToWorkOrder1795510000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(

@@ -1,132 +1,132 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddTenantIdToCMMS1785199456348 implements MigrationInterface {
-  name = 'AddTenantIdToCMMS1785199456348';
+export class AddTenantIdToCMMS1795550000000 implements MigrationInterface {
+  name = 'AddTenantIdToCMMS1795550000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE "audit_logs" DROP CONSTRAINT "audit_logs_tenant_id_fkey"`,
+      `ALTER TABLE "audit_logs" DROP CONSTRAINT IF EXISTS "audit_logs_tenant_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "sites" DROP CONSTRAINT "sites_tenant_id_fkey"`,
+      `ALTER TABLE "sites" DROP CONSTRAINT IF EXISTS "sites_tenant_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "roles" DROP CONSTRAINT "roles_tenant_id_fkey"`,
+      `ALTER TABLE "roles" DROP CONSTRAINT IF EXISTS "roles_tenant_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "organization_units" DROP CONSTRAINT "organization_units_tenant_id_fkey"`,
+      `ALTER TABLE "organization_units" DROP CONSTRAINT IF EXISTS "organization_units_tenant_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "organization_units" DROP CONSTRAINT "organization_units_parent_id_fkey"`,
+      `ALTER TABLE "organization_units" DROP CONSTRAINT IF EXISTS "organization_units_parent_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "positions" DROP CONSTRAINT "positions_tenant_id_fkey"`,
+      `ALTER TABLE "positions" DROP CONSTRAINT IF EXISTS "positions_tenant_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "positions" DROP CONSTRAINT "positions_organization_unit_id_fkey"`,
+      `ALTER TABLE "positions" DROP CONSTRAINT IF EXISTS "positions_organization_unit_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "tenant_memberships" DROP CONSTRAINT "tenant_memberships_tenant_id_fkey"`,
+      `ALTER TABLE "tenant_memberships" DROP CONSTRAINT IF EXISTS "tenant_memberships_tenant_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "tenant_memberships" DROP CONSTRAINT "tenant_memberships_user_id_fkey"`,
+      `ALTER TABLE "tenant_memberships" DROP CONSTRAINT IF EXISTS "tenant_memberships_user_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "tenant_memberships" DROP CONSTRAINT "tenant_memberships_organization_unit_id_fkey"`,
+      `ALTER TABLE "tenant_memberships" DROP CONSTRAINT IF EXISTS "tenant_memberships_organization_unit_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "tenant_memberships" DROP CONSTRAINT "tenant_memberships_position_id_fkey"`,
+      `ALTER TABLE "tenant_memberships" DROP CONSTRAINT IF EXISTS "tenant_memberships_position_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "auth_sessions" DROP CONSTRAINT "auth_sessions_tenant_id_fkey"`,
+      `ALTER TABLE "auth_sessions" DROP CONSTRAINT IF EXISTS "auth_sessions_tenant_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "auth_sessions" DROP CONSTRAINT "auth_sessions_membership_id_fkey"`,
+      `ALTER TABLE "auth_sessions" DROP CONSTRAINT IF EXISTS "auth_sessions_membership_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "submission_actions" DROP CONSTRAINT "submission_actions_tenant_id_fkey"`,
+      `ALTER TABLE "submission_actions" DROP CONSTRAINT IF EXISTS "submission_actions_tenant_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "submission_actions" DROP CONSTRAINT "submission_actions_submission_id_fkey"`,
+      `ALTER TABLE "submission_actions" DROP CONSTRAINT IF EXISTS "submission_actions_submission_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "submission_actions" DROP CONSTRAINT "submission_actions_actor_id_fkey"`,
+      `ALTER TABLE "submission_actions" DROP CONSTRAINT IF EXISTS "submission_actions_actor_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "submissions" DROP CONSTRAINT "submissions_tenant_id_fkey"`,
+      `ALTER TABLE "submissions" DROP CONSTRAINT IF EXISTS "submissions_tenant_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "submissions" DROP CONSTRAINT "submissions_requester_id_fkey"`,
+      `ALTER TABLE "submissions" DROP CONSTRAINT IF EXISTS "submissions_requester_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "submissions" DROP CONSTRAINT "submissions_current_assignee_id_fkey"`,
+      `ALTER TABLE "submissions" DROP CONSTRAINT IF EXISTS "submissions_current_assignee_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "signature_requests" DROP CONSTRAINT "signature_requests_tenant_id_fkey"`,
+      `ALTER TABLE "signature_requests" DROP CONSTRAINT IF EXISTS "signature_requests_tenant_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "signature_requests" DROP CONSTRAINT "signature_requests_submission_id_fkey"`,
+      `ALTER TABLE "signature_requests" DROP CONSTRAINT IF EXISTS "signature_requests_submission_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "signature_requests" DROP CONSTRAINT "signature_requests_requested_by_fkey"`,
+      `ALTER TABLE "signature_requests" DROP CONSTRAINT IF EXISTS "signature_requests_requested_by_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "membership_roles" DROP CONSTRAINT "membership_roles_membership_id_fkey"`,
+      `ALTER TABLE "membership_roles" DROP CONSTRAINT IF EXISTS "membership_roles_membership_id_fkey"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "membership_roles" DROP CONSTRAINT "membership_roles_role_id_fkey"`,
+      `ALTER TABLE "membership_roles" DROP CONSTRAINT IF EXISTS "membership_roles_role_id_fkey"`,
     );
-    await queryRunner.query(`DROP INDEX "public"."idx_audit_logs_tenant_id"`);
-    await queryRunner.query(`DROP INDEX "public"."idx_sites_tenant_id"`);
-    await queryRunner.query(`DROP INDEX "public"."idx_tenants_status"`);
-    await queryRunner.query(`DROP INDEX "public"."idx_roles_tenant_id"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_audit_logs_tenant_id"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_sites_tenant_id"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_tenants_status"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_roles_tenant_id"`);
     await queryRunner.query(
-      `DROP INDEX "public"."idx_organization_units_tenant_id"`,
-    );
-    await queryRunner.query(
-      `DROP INDEX "public"."idx_organization_units_parent_id"`,
-    );
-    await queryRunner.query(`DROP INDEX "public"."idx_positions_tenant_id"`);
-    await queryRunner.query(
-      `DROP INDEX "public"."idx_positions_organization_unit_id"`,
+      `DROP INDEX IF EXISTS "public"."idx_organization_units_tenant_id"`,
     );
     await queryRunner.query(
-      `DROP INDEX "public"."idx_tenant_memberships_tenant_id"`,
+      `DROP INDEX IF EXISTS "public"."idx_organization_units_parent_id"`,
+    );
+    await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_positions_tenant_id"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "public"."idx_positions_organization_unit_id"`,
     );
     await queryRunner.query(
-      `DROP INDEX "public"."idx_tenant_memberships_user_id"`,
+      `DROP INDEX IF EXISTS "public"."idx_tenant_memberships_tenant_id"`,
     );
     await queryRunner.query(
-      `DROP INDEX "public"."idx_tenant_memberships_organization_unit_id"`,
+      `DROP INDEX IF EXISTS "public"."idx_tenant_memberships_user_id"`,
     );
     await queryRunner.query(
-      `DROP INDEX "public"."idx_tenant_memberships_position_id"`,
+      `DROP INDEX IF EXISTS "public"."idx_tenant_memberships_organization_unit_id"`,
     );
     await queryRunner.query(
-      `DROP INDEX "public"."idx_auth_sessions_tenant_id"`,
+      `DROP INDEX IF EXISTS "public"."idx_tenant_memberships_position_id"`,
     );
     await queryRunner.query(
-      `DROP INDEX "public"."idx_auth_sessions_membership_id"`,
+      `DROP INDEX IF EXISTS "public"."idx_auth_sessions_tenant_id"`,
     );
     await queryRunner.query(
-      `DROP INDEX "public"."idx_submission_actions_tenant_id"`,
+      `DROP INDEX IF EXISTS "public"."idx_auth_sessions_membership_id"`,
     );
     await queryRunner.query(
-      `DROP INDEX "public"."idx_submission_actions_submission_id"`,
-    );
-    await queryRunner.query(`DROP INDEX "public"."idx_submissions_tenant_id"`);
-    await queryRunner.query(`DROP INDEX "public"."idx_submissions_status"`);
-    await queryRunner.query(
-      `DROP INDEX "public"."idx_submissions_requester_id"`,
+      `DROP INDEX IF EXISTS "public"."idx_submission_actions_tenant_id"`,
     );
     await queryRunner.query(
-      `DROP INDEX "public"."idx_submissions_current_assignee_id"`,
+      `DROP INDEX IF EXISTS "public"."idx_submission_actions_submission_id"`,
+    );
+    await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_submissions_tenant_id"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_submissions_status"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "public"."idx_submissions_requester_id"`,
     );
     await queryRunner.query(
-      `DROP INDEX "public"."idx_signature_requests_tenant_id"`,
+      `DROP INDEX IF EXISTS "public"."idx_submissions_current_assignee_id"`,
     );
     await queryRunner.query(
-      `DROP INDEX "public"."idx_signature_requests_status"`,
+      `DROP INDEX IF EXISTS "public"."idx_signature_requests_tenant_id"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "public"."idx_signature_requests_status"`,
     );
     await queryRunner.query(
       `ALTER TABLE "tenants" DROP CONSTRAINT "tenants_slug_format"`,
