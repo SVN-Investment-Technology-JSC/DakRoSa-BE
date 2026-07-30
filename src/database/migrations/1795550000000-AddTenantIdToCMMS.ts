@@ -76,17 +76,27 @@ export class AddTenantIdToCMMS1795550000000 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "membership_roles" DROP CONSTRAINT IF EXISTS "membership_roles_role_id_fkey"`,
     );
-    await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_audit_logs_tenant_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_sites_tenant_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_tenants_status"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_roles_tenant_id"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "public"."idx_audit_logs_tenant_id"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "public"."idx_sites_tenant_id"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "public"."idx_tenants_status"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "public"."idx_roles_tenant_id"`,
+    );
     await queryRunner.query(
       `DROP INDEX IF EXISTS "public"."idx_organization_units_tenant_id"`,
     );
     await queryRunner.query(
       `DROP INDEX IF EXISTS "public"."idx_organization_units_parent_id"`,
     );
-    await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_positions_tenant_id"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "public"."idx_positions_tenant_id"`,
+    );
     await queryRunner.query(
       `DROP INDEX IF EXISTS "public"."idx_positions_organization_unit_id"`,
     );
@@ -114,8 +124,12 @@ export class AddTenantIdToCMMS1795550000000 implements MigrationInterface {
     await queryRunner.query(
       `DROP INDEX IF EXISTS "public"."idx_submission_actions_submission_id"`,
     );
-    await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_submissions_tenant_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_submissions_status"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "public"."idx_submissions_tenant_id"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "public"."idx_submissions_status"`,
+    );
     await queryRunner.query(
       `DROP INDEX IF EXISTS "public"."idx_submissions_requester_id"`,
     );
