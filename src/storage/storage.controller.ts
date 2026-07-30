@@ -51,18 +51,24 @@ export class StorageController {
       throw new BadRequestException('File is required');
     }
 
+    const multerFile = file as unknown as Record<string, unknown>;
     const fileName = await this.storageService.uploadFile(
       file,
       folder || 'general',
     );
     const url = await this.storageService.getFileUrl(fileName);
-
     return {
       fileName,
       url,
-      originalName: file.originalname,
-      mimeType: file.mimetype,
-      size: file.size,
+      originalName:
+        typeof multerFile['originalname'] === 'string'
+          ? multerFile['originalname']
+          : '',
+      mimeType:
+        typeof multerFile['mimetype'] === 'string'
+          ? multerFile['mimetype']
+          : '',
+      size: typeof multerFile['size'] === 'number' ? multerFile['size'] : 0,
     };
   }
 }

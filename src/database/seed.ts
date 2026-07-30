@@ -91,9 +91,16 @@ async function seed(): Promise<void> {
     throw new Error('ADMIN_PASSWORD must contain at least 12 characters.');
   }
 
-  let admin = await userRepository.findOne({ where: { username } });
-  if (!admin) {
-    admin = userRepository.create({
+  let platformAdmin = await userRepository.findOne({ where: { username } });
+  // A deployment may have renamed ADMIN_USERNAME after the initial seed. The
+  // configured email is also unique (case-insensitively) in the database, so
+  // reuse that account instead of attempting a duplicate insert.
+  platformAdmin ??= await userRepository
+    .createQueryBuilder('user')
+    .where('LOWER(user.email) = :email', { email: adminEmail })
+    .getOne();
+  if (!platformAdmin) {
+    platformAdmin = userRepository.create({
       username,
       displayName: process.env.ADMIN_DISPLAY_NAME ?? 'Quản trị hệ thống',
       shortName: 'ADMIN',
@@ -105,21 +112,21 @@ async function seed(): Promise<void> {
       passwordHash: await argon2.hash(password, { type: argon2.argon2id }),
       isActive: true,
     });
-    await userRepository.save(admin);
-  } else if (admin.email === 'admin@dakrosa.local') {
-    admin.email = adminEmail;
-    await userRepository.save(admin);
+    await userRepository.save(platformAdmin);
+  } else if (platformAdmin.email === 'admin@dakrosa.local') {
+    platformAdmin.email = adminEmail;
+    await userRepository.save(platformAdmin);
   }
-  admin.isPlatformAdmin = true;
-  await userRepository.save(admin);
+  platformAdmin.isPlatformAdmin = true;
+  await userRepository.save(platformAdmin);
 
   let membership = await membershipRepository.findOne({
-    where: { tenantId: tenant.id, userId: admin.id },
+    where: { tenantId: tenant.id, userId: platformAdmin.id },
     relations: { roles: true },
   });
   membership ??= membershipRepository.create({
     tenantId: tenant.id,
-    userId: admin.id,
+    userId: platformAdmin.id,
     status: 'active',
     isDefault: true,
     roles: [],

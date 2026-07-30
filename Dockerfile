@@ -21,6 +21,9 @@ ENV NODE_ENV=production
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --prod --frozen-lockfile
 COPY --from=build /app/dist ./dist
+RUN test -f ./dist/main.js \
+  && test -f ./dist/database/data-source.js \
+  && test -f ./dist/database/seed.js
 USER node
 EXPOSE 8080
 CMD ["node", "dist/main.js"]

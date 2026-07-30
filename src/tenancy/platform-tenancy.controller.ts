@@ -1,13 +1,17 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
   Patch,
   Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { PlatformAdminGuard } from '../auth/guards/platform-admin.guard';
 import {
@@ -20,6 +24,7 @@ import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { CreateSiteDto, UpdateSiteDto } from './dto/site.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { CreateTenantAdminDto } from './dto/create-tenant-admin.dto';
+import { PermanentlyDeleteTenantDto } from './dto/permanently-delete-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenancyService } from './tenancy.service';
 
@@ -34,6 +39,11 @@ export class PlatformTenancyController {
   @Get()
   list() {
     return this.service.listPlatformTenants();
+  }
+
+  @Get('archived')
+  listArchived() {
+    return this.service.listArchivedPlatformTenants();
   }
 
   @Post()
@@ -53,6 +63,62 @@ export class PlatformTenancyController {
     @ClientContextParam() context: ClientContext,
   ) {
     return this.service.updatePlatformTenant(id, dto, actor, context);
+  }
+
+  @Delete(':id')
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthUser,
+    @ClientContextParam() context: ClientContext,
+  ) {
+    return this.service.archivePlatformTenant(id, actor, context);
+  }
+
+  @Post(':id/restore')
+  restore(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthUser,
+    @ClientContextParam() context: ClientContext,
+  ) {
+    return this.service.restorePlatformTenant(id, actor, context);
+  }
+
+  @Delete(':id/permanent')
+  permanentlyDelete(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: PermanentlyDeleteTenantDto,
+    @CurrentUser() actor: AuthUser,
+    @ClientContextParam() context: ClientContext,
+  ) {
+    return this.service.permanentlyDeletePlatformTenant(
+      id,
+      dto.confirmation,
+      actor,
+      context,
+    );
+  }
+
+  @Post(':id/logo')
+  @UseInterceptors(
+    FileInterceptor('logo', { limits: { fileSize: 2 * 1024 * 1024 } }),
+  )
+  uploadLogo(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile()
+    file: { buffer: Buffer; mimetype: string; size: number } | undefined,
+    @CurrentUser() actor: AuthUser,
+    @ClientContextParam() context: ClientContext,
+  ) {
+    return this.service.uploadPlatformTenantLogo(id, file, actor, context);
+  }
+
+  @Delete(':id/logo')
+  removeLogo(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthUser,
+    @ClientContextParam() context: ClientContext,
+  ) {
+    return this.service.removePlatformTenantLogo(id, actor, context);
   }
 
   @Post(':tenantId/admins')
