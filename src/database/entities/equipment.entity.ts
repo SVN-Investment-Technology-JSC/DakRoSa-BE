@@ -6,11 +6,14 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 import { TenantEntity } from './tenant.entity';
+import { SiteEntity } from './site.entity';
 
 @Entity({ name: 'equipments' })
+@Unique('UQ_equipments_tenant_code', ['tenantId', 'code'])
 export class EquipmentEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -21,6 +24,13 @@ export class EquipmentEntity {
   @ManyToOne(() => TenantEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'tenant_id' })
   tenant!: TenantEntity;
+
+  @Column({ name: 'site_id', type: 'uuid', nullable: true })
+  siteId!: string | null;
+
+  @ManyToOne(() => SiteEntity, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'site_id' })
+  site!: SiteEntity | null;
 
   @Column({ name: 'parent_id', type: 'uuid', nullable: true })
   parentId!: string | null;
@@ -34,7 +44,7 @@ export class EquipmentEntity {
   @OneToMany(() => EquipmentEntity, (equipment) => equipment.parent)
   children!: EquipmentEntity[];
 
-  @Column({ unique: true, length: 100 })
+  @Column({ length: 100 })
   code!: string;
 
   @Column({ length: 255 })
@@ -50,7 +60,7 @@ export class EquipmentEntity {
   installationDate!: string | null;
 
   @Column({ type: 'jsonb', nullable: true })
-  specs!: Record<string, any> | null;
+  specs!: Record<string, unknown> | null;
 
   @Column({ type: 'text', nullable: true })
   description!: string | null;

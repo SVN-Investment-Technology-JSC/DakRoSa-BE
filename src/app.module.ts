@@ -2,6 +2,7 @@ import { Module, OnApplicationShutdown, Inject } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import Redis from 'ioredis';
 import authConfig from './config/auth.config';
@@ -27,6 +28,8 @@ import { EquipmentModule } from './equipment/equipment.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { WorkOrderModule } from './work-order/work-order.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
+import { WorkflowModule } from './workflow/workflow.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -61,6 +64,7 @@ import { MaintenanceModule } from './maintenance/maintenance.module';
       }),
     }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
+    ScheduleModule.forRoot(),
     RedisModule,
     StorageModule,
     AuditModule,
@@ -75,6 +79,8 @@ import { MaintenanceModule } from './maintenance/maintenance.module';
     EquipmentModule,
     InventoryModule,
     WorkOrderModule,
+    WorkflowModule,
+    NotificationsModule,
     MaintenanceModule,
   ],
   providers: [

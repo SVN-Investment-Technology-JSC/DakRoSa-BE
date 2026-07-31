@@ -68,6 +68,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       tenantSlug: membership.tenant.slug,
       enabledModules: membership.tenant.enabledModules,
       membershipId: membership.id,
+      organizationUnitId: membership.organizationUnitId,
+      positionId: membership.positionId,
+      dataScope: membership.dataScope,
       isPlatformAdmin: membership.user.isPlatformAdmin,
       roleCodes: membership.roles.map((role) => role.code),
       permissions: [

@@ -8,6 +8,9 @@ export interface AuthUser {
   tenantSlug: string;
   enabledModules: string[];
   membershipId: string;
+  organizationUnitId: string | null;
+  positionId: string | null;
+  dataScope: 'tenant' | 'organization_unit' | 'site' | 'own';
   isPlatformAdmin: boolean;
   roleCodes: string[];
   permissions: string[];

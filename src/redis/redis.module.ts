@@ -1,8 +1,10 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
+import { REDIS } from './redis.constants';
+import { RedisLockService } from './redis-lock.service';
 
-export const REDIS = Symbol('REDIS');
+export { REDIS } from './redis.constants';
 
 @Global()
 @Module({
@@ -17,7 +19,8 @@ export const REDIS = Symbol('REDIS');
           enableReadyCheck: true,
         }),
     },
+    RedisLockService,
   ],
-  exports: [REDIS],
+  exports: [REDIS, RedisLockService],
 })
 export class RedisModule {}

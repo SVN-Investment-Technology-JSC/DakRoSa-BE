@@ -2,14 +2,17 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 import { TenantEntity } from './tenant.entity';
 import { EquipmentEntity } from './equipment.entity';
 import { UserEntity } from './user.entity';
+import { SiteEntity } from './site.entity';
 
 export enum WorkOrderType {
   INCIDENT = 'INCIDENT',
@@ -22,9 +25,15 @@ export enum WorkOrderStatus {
   IN_PROGRESS = 'IN_PROGRESS',
   COMPLETED = 'COMPLETED',
   CLOSED = 'CLOSED',
+  CANCELLED = 'CANCELLED',
 }
 
 @Entity({ name: 'work_orders' })
+@Unique('UQ_work_orders_tenant_code', ['tenantId', 'code'])
+@Index('UQ_work_orders_maintenance_occurrence', ['maintenanceOccurrenceId'], {
+  unique: true,
+  where: '"maintenance_occurrence_id" IS NOT NULL',
+})
 export class WorkOrderEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -36,7 +45,7 @@ export class WorkOrderEntity {
   @JoinColumn({ name: 'tenant_id' })
   tenant!: TenantEntity;
 
-  @Column({ unique: true, length: 100 })
+  @Column({ length: 100 })
   code!: string;
 
   @Column({ length: 255 })
@@ -65,6 +74,13 @@ export class WorkOrderEntity {
   @JoinColumn({ name: 'equipment_id' })
   equipment!: EquipmentEntity | null;
 
+  @Column({ name: 'site_id', type: 'uuid', nullable: true })
+  siteId!: string | null;
+
+  @ManyToOne(() => SiteEntity, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'site_id' })
+  site!: SiteEntity | null;
+
   @Column({ name: 'reporter_id', type: 'uuid', nullable: true })
   reporterId!: string | null;
 
@@ -90,6 +106,34 @@ export class WorkOrderEntity {
 
   @Column({ name: 'root_cause', type: 'text', nullable: true })
   rootCause!: string | null;
+
+  @Column({ name: 'planned_start_at', type: 'timestamptz', nullable: true })
+  plannedStartAt!: Date | null;
+
+  @Column({ name: 'due_at', type: 'timestamptz', nullable: true })
+  dueAt!: Date | null;
+
+  @Column({ name: 'progress_percent', type: 'integer', default: 0 })
+  progressPercent!: number;
+
+  @Column({ name: 'maintenance_schedule_id', type: 'uuid', nullable: true })
+  maintenanceScheduleId!: string | null;
+
+  @Column({ name: 'maintenance_occurrence_id', type: 'uuid', nullable: true })
+  maintenanceOccurrenceId!: string | null;
+
+  @Column({ name: 'job_plan_version_id', type: 'uuid', nullable: true })
+  jobPlanVersionId!: string | null;
+
+  @Column({ name: 'workflow_instance_id', type: 'uuid', nullable: true })
+  workflowInstanceId!: string | null;
+
+  @Column({
+    name: 'custom_fields',
+    type: 'jsonb',
+    default: () => "'{}'::jsonb",
+  })
+  customFields!: Record<string, unknown>;
 
   @Column({ type: 'jsonb', nullable: true })
   attachments!: string[] | null;

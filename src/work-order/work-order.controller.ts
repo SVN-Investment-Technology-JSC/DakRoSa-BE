@@ -12,6 +12,11 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { WorkOrderService } from './work-order.service';
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { UpdateWorkOrderDto } from './dto/update-work-order.dto';
+import {
+  CreateWorkOrderUpdateDto,
+  UpdateWorkOrderChecklistDto,
+} from './dto/work-order-progress.dto';
+import { WorkflowActionDto } from '../workflow/dto/workflow-definition.dto';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
@@ -30,7 +35,12 @@ export class WorkOrderController {
   @RequirePermissions('work_order.create')
   @ApiOperation({ summary: 'Create new work order' })
   create(@Body() dto: CreateWorkOrderDto, @CurrentUser() user: AuthUser) {
-    return this.workOrderService.create(user.tenantId, dto, user.id);
+    return this.workOrderService.create(
+      user.tenantId,
+      dto,
+      user.id,
+      user.tenantSlug,
+    );
   }
 
   @Get()
@@ -44,7 +54,7 @@ export class WorkOrderController {
   @RequirePermissions('work_order.view')
   @ApiOperation({ summary: 'Get work order details' })
   findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.workOrderService.findOne(user.tenantId, id);
+    return this.workOrderService.findOne(user.tenantId, id, user);
   }
 
   @Get('equipment/:equipmentId')
@@ -66,6 +76,63 @@ export class WorkOrderController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.workOrderService.update(user.tenantId, id, dto, user.id);
+  }
+
+  @Post(':id/actions')
+  @RequirePermissions('work_order.update')
+  @ApiOperation({ summary: 'Perform an allowed workflow action' })
+  performAction(
+    @Param('id') id: string,
+    @Body() dto: WorkflowActionDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.workOrderService.performWorkflowAction(
+      user.tenantId,
+      id,
+      user,
+      dto,
+    );
+  }
+
+  @Get(':id/updates')
+  @RequirePermissions('work_order.view')
+  @ApiOperation({ summary: 'Get work order progress updates' })
+  getUpdates(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.workOrderService.getUpdates(user.tenantId, id);
+  }
+
+  @Post(':id/updates')
+  @RequirePermissions('work_order.update')
+  @ApiOperation({ summary: 'Add a work order progress update' })
+  addUpdate(
+    @Param('id') id: string,
+    @Body() dto: CreateWorkOrderUpdateDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.workOrderService.addUpdate(user.tenantId, id, user.id, dto);
+  }
+
+  @Get(':id/checklist')
+  @RequirePermissions('work_order.view')
+  @ApiOperation({ summary: 'Get the pinned work order checklist' })
+  getChecklist(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.workOrderService.getChecklist(user.tenantId, id);
+  }
+
+  @Patch(':id/checklist')
+  @RequirePermissions('work_order.update')
+  @ApiOperation({ summary: 'Update one work order checklist item' })
+  updateChecklist(
+    @Param('id') id: string,
+    @Body() dto: UpdateWorkOrderChecklistDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.workOrderService.updateChecklist(
+      user.tenantId,
+      id,
+      user.id,
+      dto,
+    );
   }
 
   @Get(':id/materials')
