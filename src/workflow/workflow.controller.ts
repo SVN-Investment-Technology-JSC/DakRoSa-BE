@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -36,6 +37,12 @@ export class WorkflowController {
   @RequirePermissions(PERMISSIONS.WORKFLOW_DEFINITION_VIEW)
   list(@CurrentUser() user: AuthUser) {
     return this.service.listDefinitions(user.tenantId);
+  }
+
+  @Get('definitions/archived')
+  @RequirePermissions(PERMISSIONS.WORKFLOW_DEFINITION_VIEW)
+  listArchived(@CurrentUser() user: AuthUser) {
+    return this.service.listArchivedDefinitions(user.tenantId);
   }
 
   @Post('definitions')
@@ -98,6 +105,24 @@ export class WorkflowController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.service.archiveDefinition(user.tenantId, id);
+  }
+
+  @Patch('definitions/:id/restore')
+  @RequirePermissions(PERMISSIONS.WORKFLOW_DEFINITION_MANAGE)
+  restore(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.service.restoreDefinition(user.tenantId, id);
+  }
+
+  @Delete('definitions/:id/permanent')
+  @RequirePermissions(PERMISSIONS.WORKFLOW_DEFINITION_MANAGE)
+  deletePermanently(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.service.deleteDefinitionPermanently(user.tenantId, id);
   }
 
   @Get('instances/:id')

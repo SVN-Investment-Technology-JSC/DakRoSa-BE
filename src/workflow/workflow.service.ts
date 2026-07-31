@@ -8,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import {
+  MaintenanceScheduleEntity,
   NotificationEntity,
   OrganizationUnitEntity,
   TenantMembershipEntity,
@@ -82,8 +83,19 @@ export class WorkflowService {
   ) {}
 
   async listDefinitions(tenantId: string) {
+    return this.listDefinitionsByStatuses(tenantId, ['draft', 'published']);
+  }
+
+  async listArchivedDefinitions(tenantId: string) {
+    return this.listDefinitionsByStatuses(tenantId, ['archived']);
+  }
+
+  private async listDefinitionsByStatuses(
+    tenantId: string,
+    statuses: WorkflowDefinitionEntity['status'][],
+  ) {
     const definitions = await this.definitions.find({
-      where: { tenantId },
+      where: { tenantId, status: In(statuses) },
       order: { updatedAt: 'DESC' },
     });
     const definitionIds = definitions.map((definition) => definition.id);
@@ -297,8 +309,57 @@ export class WorkflowService {
 
   async archiveDefinition(tenantId: string, id: string) {
     const definition = await this.requireDefinition(tenantId, id);
+    if (definition.status === 'archived') return definition;
     definition.status = 'archived';
     return this.definitions.save(definition);
+  }
+
+  async restoreDefinition(tenantId: string, id: string) {
+    const definition = await this.requireDefinition(tenantId, id);
+    if (definition.status !== 'archived') {
+      throw new ConflictException(
+        'Chỉ có thể khôi phục quy trình đang được lưu trữ.',
+      );
+    }
+    definition.status = definition.currentVersionId ? 'published' : 'draft';
+    return this.definitions.save(definition);
+  }
+
+  async deleteDefinitionPermanently(tenantId: string, id: string) {
+    return this.dataSource.transaction(async (manager) => {
+      const definition = await this.requireDefinitionWithManager(
+        manager,
+        tenantId,
+        id,
+      );
+      if (definition.status !== 'archived') {
+        throw new ConflictException(
+          'Quy trình phải được lưu trữ trước khi xóa vĩnh viễn.',
+        );
+      }
+
+      const [scheduleCount, instanceCount] = await Promise.all([
+        manager.getRepository(MaintenanceScheduleEntity).count({
+          where: { tenantId, workflowDefinitionId: id },
+        }),
+        manager.getRepository(WorkflowInstanceEntity).count({
+          where: { tenantId, definitionId: id },
+        }),
+      ]);
+      if (scheduleCount || instanceCount) {
+        throw new ConflictException(
+          `Không thể xóa vĩnh viễn vì quy trình đang được tham chiếu bởi ${scheduleCount} kế hoạch và ${instanceCount} lịch sử xử lý.`,
+        );
+      }
+
+      const definitionRepo = manager.getRepository(WorkflowDefinitionEntity);
+      if (definition.currentVersionId) {
+        definition.currentVersionId = null;
+        await definitionRepo.save(definition);
+      }
+      await definitionRepo.remove(definition);
+      return { id, deleted: true };
+    });
   }
 
   async startInstance(input: StartWorkflowInput) {
