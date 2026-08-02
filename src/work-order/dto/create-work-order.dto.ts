@@ -4,6 +4,8 @@ import {
   IsString,
   IsEnum,
   IsUUID,
+  IsDateString,
+  IsObject,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -46,6 +48,51 @@ export class CreateWorkOrderDto {
   @IsOptional()
   @IsUUID()
   assigneeId?: string;
+
+  @ApiPropertyOptional({ description: 'Technical reviewer user ID' })
+  @IsOptional()
+  @IsUUID()
+  technicalReviewerId?: string;
+
+  @ApiPropertyOptional({ description: 'Site ID' })
+  @IsOptional()
+  @IsUUID()
+  siteId?: string;
+
+  @ApiPropertyOptional({ description: 'Workflow definition ID' })
+  @IsOptional()
+  @IsUUID()
+  workflowDefinitionId?: string;
+
+  @ApiPropertyOptional({ description: 'Maintenance schedule ID' })
+  @IsOptional()
+  @IsUUID()
+  maintenanceScheduleId?: string;
+
+  @ApiPropertyOptional({ description: 'Maintenance occurrence ID' })
+  @IsOptional()
+  @IsUUID()
+  maintenanceOccurrenceId?: string;
+
+  @ApiPropertyOptional({ description: 'Job plan version ID' })
+  @IsOptional()
+  @IsUUID()
+  jobPlanVersionId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  plannedStartAt?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  dueAt?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsObject()
+  customFields?: Record<string, unknown>;
 
   @ApiPropertyOptional({ description: 'Priority level' })
   @IsOptional()

@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '../common/constants/permissions';
@@ -19,6 +20,8 @@ import {
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
+import { TenantModuleGuard } from '../auth/guards/tenant-module.guard';
+import { RequireTenantModules } from '../common/decorators/tenant-module.decorator';
 import { AssignPermissionsDto } from './dto/assign-permissions.dto';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -26,6 +29,8 @@ import { RbacService } from './rbac.service';
 
 @ApiTags('Roles & permissions')
 @ApiBearerAuth()
+@UseGuards(TenantModuleGuard)
+@RequireTenantModules('administration')
 @Controller({ path: 'rbac', version: '1' })
 export class RbacController {
   constructor(private readonly service: RbacService) {}

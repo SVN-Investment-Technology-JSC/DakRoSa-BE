@@ -8,6 +8,7 @@ import {
 } from '../database/entities';
 import { RbacController } from './rbac.controller';
 import { RbacService } from './rbac.service';
+import { TenantModuleGuard } from '../auth/guards/tenant-module.guard';
 
 @Module({
   imports: [
@@ -19,6 +20,6 @@ import { RbacService } from './rbac.service';
     AuditModule,
   ],
   controllers: [RbacController],
-  providers: [RbacService],
+  providers: [RbacService, TenantModuleGuard],
 })
 export class RbacModule {}

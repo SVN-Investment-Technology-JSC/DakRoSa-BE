@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { MaintenanceService } from './maintenance.service';
@@ -14,9 +15,13 @@ import { UpdateMaintenanceDto } from './dto/update-maintenance.dto';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
+import { TenantModuleGuard } from '../auth/guards/tenant-module.guard';
+import { RequireTenantModules } from '../common/decorators/tenant-module.decorator';
 
 @ApiTags('Maintenance')
 @ApiBearerAuth()
+@UseGuards(TenantModuleGuard)
+@RequireTenantModules('cmms')
 @Controller('maintenance')
 export class MaintenanceController {
   constructor(private readonly maintenanceService: MaintenanceService) {}
