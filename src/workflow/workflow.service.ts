@@ -7,24 +7,26 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
+import { MaintenanceScheduleEntity } from '../database/entities/maintenance-schedule.entity';
+import { NotificationEntity } from '../database/entities/notification.entity';
+import { OrganizationUnitEntity } from '../database/entities/organization-unit.entity';
+import { TenantMembershipEntity } from '../database/entities/tenant-membership.entity';
+import { WorkflowActionEntity } from '../database/entities/workflow-action.entity';
 import {
-  MaintenanceScheduleEntity,
-  NotificationEntity,
-  OrganizationUnitEntity,
-  TenantMembershipEntity,
-  WorkflowActionEntity,
   WorkflowAssigneeRuleEntity,
   WorkflowAssigneeType,
-  WorkflowDefinitionEntity,
-  WorkflowInstanceEntity,
+} from '../database/entities/workflow-assignee-rule.entity';
+import { WorkflowDefinitionEntity } from '../database/entities/workflow-definition.entity';
+import { WorkflowInstanceEntity } from '../database/entities/workflow-instance.entity';
+import {
   WorkflowNodeEntity,
   WorkflowNodeType,
-  WorkflowTaskAssignmentEntity,
-  WorkflowTaskEntity,
-  WorkflowTokenEntity,
-  WorkflowTransitionEntity,
-  WorkflowVersionEntity,
-} from '../database/entities';
+} from '../database/entities/workflow-node.entity';
+import { WorkflowTaskAssignmentEntity } from '../database/entities/workflow-task-assignment.entity';
+import { WorkflowTaskEntity } from '../database/entities/workflow-task.entity';
+import { WorkflowTokenEntity } from '../database/entities/workflow-token.entity';
+import { WorkflowTransitionEntity } from '../database/entities/workflow-transition.entity';
+import { WorkflowVersionEntity } from '../database/entities/workflow-version.entity';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import {
   CloneWorkflowDefinitionDto,
