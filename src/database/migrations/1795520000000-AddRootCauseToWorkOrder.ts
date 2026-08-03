@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface } from 'typeorm';
 
 /**
  * Kept as a compatibility marker for databases that discovered this migration.
@@ -7,11 +7,11 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class AddRootCauseToWorkOrder1795520000000 implements MigrationInterface {
   name = 'AddRootCauseToWorkOrder1795520000000';
 
-  public up(_queryRunner: QueryRunner): Promise<void> {
+  public up(): Promise<void> {
     return Promise.resolve();
   }
 
-  public down(_queryRunner: QueryRunner): Promise<void> {
+  public down(): Promise<void> {
     return Promise.resolve();
   }
 }
