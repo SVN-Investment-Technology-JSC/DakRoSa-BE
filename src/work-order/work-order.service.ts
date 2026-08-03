@@ -454,7 +454,7 @@ export class WorkOrderService {
       builder.andWhere('occurrence.tenant_id = :tenantId', { tenantId });
     }
     const occurrences = await builder
-      .orderBy('occurrence.planned_start_at', 'ASC')
+      .orderBy('occurrence.plannedStartAt', 'ASC')
       .take(200)
       .getMany();
     const tenantSlugs = new Map(
