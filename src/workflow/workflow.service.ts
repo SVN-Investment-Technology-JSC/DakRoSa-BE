@@ -182,13 +182,6 @@ export class WorkflowService {
     userId: string,
     dto: SaveWorkflowDraftDto,
   ) {
-    const validation = this.validateGraphInput(dto.nodes, dto.transitions);
-    if (!validation.valid) {
-      throw new BadRequestException({
-        message: 'Sơ đồ quy trình chưa hợp lệ.',
-        errors: validation.errors,
-      });
-    }
     return this.dataSource.transaction(async (manager) => {
       const definition = await this.requireDefinitionWithManager(
         manager,
@@ -196,9 +189,17 @@ export class WorkflowService {
         id,
       );
       const draft = await this.ensureDraft(manager, definition, userId);
+      const transitions = this.prepareTransitions(dto.transitions);
+      const validation = this.validateGraphInput(dto.nodes, transitions);
+      if (!validation.valid) {
+        throw new BadRequestException({
+          message: 'Sơ đồ quy trình chưa hợp lệ.',
+          errors: validation.errors,
+        });
+      }
       draft.changelog = dto.changelog?.trim() || draft.changelog;
       await manager.getRepository(WorkflowVersionEntity).save(draft);
-      await this.replaceGraph(manager, draft, dto);
+      await this.replaceGraph(manager, draft, { ...dto, transitions });
       return this.getDefinitionWithManager(manager, tenantId, id);
     });
   }
@@ -512,16 +513,17 @@ export class WorkflowService {
           'Hành động không hợp lệ tại bước hiện tại.',
         );
       }
-      const requiredPermission = task.node.config['requiredPermission'];
+      const requiredPermissions = this.requiredPermissions(task.node.config);
       if (
-        typeof requiredPermission === 'string' &&
-        requiredPermission &&
+        requiredPermissions.length &&
         !user.isPlatformAdmin &&
         !user.roleCodes.includes('admin') &&
-        !user.permissions.includes(requiredPermission)
+        !requiredPermissions.some((permission) =>
+          user.permissions.includes(permission),
+        )
       ) {
         throw new ForbiddenException(
-          `Bạn thiếu quyền "${requiredPermission}" để xử lý bước này.`,
+          `Bạn cần ít nhất một trong các quyền sau để xử lý bước này: ${requiredPermissions.join(', ')}.`,
         );
       }
       this.validateActionPayload(
@@ -797,6 +799,11 @@ export class WorkflowService {
     version: WorkflowVersionEntity,
     graph: Pick<SaveWorkflowDraftDto, 'nodes' | 'transitions'>,
   ) {
+    const transitionRepo = manager.getRepository(WorkflowTransitionEntity);
+    const existingTransitionIds = await this.transitionIdsForVersion(
+      manager,
+      version.id,
+    );
     const nodeRepo = manager.getRepository(WorkflowNodeEntity);
     await nodeRepo.delete({ versionId: version.id });
     const nodeMap = new Map<string, WorkflowNodeEntity>();
@@ -827,9 +834,13 @@ export class WorkflowService {
         );
       }
     }
-    const transitionRepo = manager.getRepository(WorkflowTransitionEntity);
+    const transitions = this.prepareTransitions(graph.transitions);
+    await transitionRepo.delete({ versionId: version.id });
     await transitionRepo.save(
-      graph.transitions.map((transition) => ({
+      transitions.map((transition) => ({
+        ...(transition.id && existingTransitionIds.has(transition.id)
+          ? { id: transition.id }
+          : {}),
         versionId: version.id,
         sourceNodeId: nodeMap.get(transition.sourceKey)!.id,
         targetNodeId: nodeMap.get(transition.targetKey)!.id,
@@ -839,6 +850,76 @@ export class WorkflowService {
         sortOrder: transition.sortOrder ?? 0,
       })),
     );
+  }
+
+  /**
+   * `actionKey` is a system-facing, readable code. End users only maintain
+   * the label; the code is generated once and preserved on later edits.
+   */
+  private prepareTransitions(
+    transitions: WorkflowTransitionInputDto[],
+  ): Array<WorkflowTransitionInputDto & { actionKey: string }> {
+    const usedKeysBySource = new Map<string, Set<string>>();
+    return transitions.map((transition) => {
+      const used = usedKeysBySource.get(transition.sourceKey) ?? new Set<string>();
+      const requested = transition.actionKey?.trim().toLowerCase();
+      const base =
+        requested && /^[a-z0-9][a-z0-9_.-]*$/.test(requested)
+          ? requested
+          : this.actionKeyFromLabel(transition.label);
+      let actionKey = base;
+      let suffix = 2;
+      while (used.has(actionKey)) {
+        const suffixText = `_${suffix++}`;
+        actionKey = `${base.slice(0, Math.max(1, 80 - suffixText.length))}${suffixText}`;
+      }
+      used.add(actionKey);
+      usedKeysBySource.set(transition.sourceKey, used);
+      return { ...transition, actionKey };
+    });
+  }
+
+  private actionKeyFromLabel(label: string) {
+    const normalized = label
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 80);
+    return normalized || 'action';
+  }
+
+  private async transitionIdsForVersion(
+    manager: EntityManager,
+    versionId: string,
+  ) {
+    const transitions = await manager
+      .getRepository(WorkflowTransitionEntity)
+      .find({ where: { versionId }, select: { id: true } });
+    return new Set(transitions.map((transition) => transition.id));
+  }
+
+  /**
+   * Uses the new multi-select configuration while continuing to honour
+   * definitions that were saved with the legacy single permission field.
+   */
+  private requiredPermissions(config: Record<string, unknown>): string[] {
+    const configured = config['requiredPermissions'];
+    const values = Array.isArray(configured)
+      ? configured
+      : typeof config['requiredPermission'] === 'string'
+        ? [config['requiredPermission']]
+        : [];
+    return [
+      ...new Set(
+        values.filter(
+          (permission): permission is string =>
+            typeof permission === 'string' &&
+            /^[a-z0-9][a-z0-9_.-]{1,119}$/.test(permission),
+        ),
+      ),
+    ];
   }
 
   private validateGraphInput(
@@ -858,7 +939,7 @@ export class WorkflowService {
         node.type === WorkflowNodeType.HUMAN_TASK &&
         typeof node.config?.['slaMinutes'] !== 'number'
       ) {
-        warnings.push(`Bước "${node.name}" chưa cấu hình SLA.`);
+        warnings.push(`Bước "${node.name}" chưa cấu hình thời hạn xử lý.`);
       }
       for (const rule of node.assignees) {
         if (
@@ -879,11 +960,22 @@ export class WorkflowService {
           errors.push(`Quy tắc phân công tại "${node.name}" thiếu field key.`);
         }
       }
-      const requiredPermission = node.config?.['requiredPermission'];
+      const configuredPermissions = node.config?.['requiredPermissions'];
+      const legacyPermission = node.config?.['requiredPermission'];
+      const permissionsToValidate =
+        configuredPermissions === undefined
+          ? legacyPermission === undefined
+            ? []
+            : [legacyPermission]
+          : configuredPermissions;
       if (
-        requiredPermission !== undefined &&
-        (typeof requiredPermission !== 'string' ||
-          !/^[a-z0-9][a-z0-9_.-]{1,119}$/.test(requiredPermission))
+        !Array.isArray(permissionsToValidate) ||
+        permissionsToValidate.length > 20 ||
+        !permissionsToValidate.every(
+          (permission) =>
+            typeof permission === 'string' &&
+            /^[a-z0-9][a-z0-9_.-]{1,119}$/.test(permission),
+        )
       ) {
         errors.push(`Quyền bắt buộc tại "${node.name}" không đúng định dạng.`);
       }
@@ -1576,11 +1668,12 @@ export class WorkflowService {
         .map((assignment) => assignment.taskId),
     );
     const eligible = tasks.filter((task) => {
-      const requiredPermission = task.node.config['requiredPermission'];
+      const requiredPermissions = this.requiredPermissions(task.node.config);
       const hasStepPermission =
-        typeof requiredPermission !== 'string' ||
-        !requiredPermission ||
-        user.permissions.includes(requiredPermission) ||
+        !requiredPermissions.length ||
+        requiredPermissions.some((permission) =>
+          user.permissions.includes(permission),
+        ) ||
         user.isPlatformAdmin ||
         user.roleCodes.includes('admin');
       return (
@@ -1611,9 +1704,10 @@ export class WorkflowService {
         key: transition.actionKey,
         label: transition.label,
         targetNodeId: transition.targetNodeId,
-        requiredPermission:
+        requiredPermissions: this.requiredPermissions(
           eligible.find((task) => task.nodeId === transition.sourceNodeId)?.node
-            .config['requiredPermission'] ?? null,
+            .config ?? {},
+        ),
         formFields:
           eligible.find((task) => task.nodeId === transition.sourceNodeId)?.node
             .config['formFields'] ?? [],

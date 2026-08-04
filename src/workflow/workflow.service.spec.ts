@@ -13,6 +13,7 @@ import {
   WorkflowVersionEntity,
 } from '../database/entities';
 import { WorkflowService } from './workflow.service';
+import { WorkflowTransitionInputDto } from './dto/workflow-definition.dto';
 
 const tenantId = 'tenant-1';
 const definitionId = 'workflow-1';
@@ -190,5 +191,71 @@ describe('WorkflowService archive lifecycle', () => {
     expect(repositories.definitionRepository.remove).toHaveBeenCalledWith(
       definition,
     );
+  });
+});
+
+describe('WorkflowService transition identifiers', () => {
+  it('creates readable action keys from labels and keeps existing keys stable', () => {
+    const { service } = createService();
+    const internals = service as unknown as {
+      prepareTransitions: (
+        transitions: WorkflowTransitionInputDto[],
+      ) => Array<WorkflowTransitionInputDto & { actionKey: string }>;
+    };
+
+    const transitions = internals.prepareTransitions([
+      {
+        sourceKey: 'review',
+        targetKey: 'completed',
+        label: 'Duyệt',
+      },
+      {
+        sourceKey: 'review',
+        targetKey: 'rework',
+        label: 'Duyệt',
+      },
+      {
+        sourceKey: 'other_step',
+        targetKey: 'completed',
+        label: 'Duyệt',
+      },
+      {
+        sourceKey: 'review',
+        targetKey: 'completed',
+        label: 'Phê duyệt cuối cùng',
+        actionKey: 'approve_final',
+      },
+    ]);
+
+    expect(transitions.map((transition) => transition.actionKey)).toEqual([
+      'duyet',
+      'duyet_2',
+      'duyet',
+      'approve_final',
+    ]);
+  });
+});
+
+describe('WorkflowService step permissions', () => {
+  it('accepts multiple selected permissions and legacy single-permission definitions', () => {
+    const { service } = createService();
+    const internals = service as unknown as {
+      requiredPermissions: (config: Record<string, unknown>) => string[];
+    };
+
+    expect(
+      internals.requiredPermissions({
+        requiredPermissions: [
+          'work_order.execute',
+          'work_order.review',
+          'work_order.execute',
+        ],
+      }),
+    ).toEqual(['work_order.execute', 'work_order.review']);
+    expect(
+      internals.requiredPermissions({
+        requiredPermission: 'work_order.review',
+      }),
+    ).toEqual(['work_order.review']);
   });
 });
