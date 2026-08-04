@@ -29,8 +29,17 @@ export class WorkOrderLogEntity {
   @JoinColumn({ name: 'work_order_id' })
   workOrder!: WorkOrderEntity;
 
+  /** Alias cho user_id để engine service dùng thống nhất */
   @Column({ name: 'user_id', type: 'uuid' })
   userId!: string;
+
+  /** actorId là alias đọc được ở service – map sang user_id */
+  get actorId(): string {
+    return this.userId;
+  }
+  set actorId(value: string) {
+    this.userId = value;
+  }
 
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
@@ -41,6 +50,10 @@ export class WorkOrderLogEntity {
 
   @Column({ type: 'text', nullable: true })
   note!: string | null;
+
+  /** Dữ liệu bổ sung: formData, stepKey, v.v. */
+  @Column({ type: 'jsonb', default: () => "'{}' ::jsonb" })
+  metadata!: Record<string, unknown>;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

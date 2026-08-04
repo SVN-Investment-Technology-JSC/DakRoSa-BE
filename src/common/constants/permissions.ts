@@ -39,6 +39,15 @@ export const PERMISSIONS = {
   MAINTENANCE_CREATE: 'maintenance.create',
   MAINTENANCE_UPDATE: 'maintenance.update',
   MAINTENANCE_DELETE: 'maintenance.delete',
+  // Workflow Engine
+  WORKFLOW_VIEW: 'workflow.definition.view',
+  WORKFLOW_CREATE: 'workflow.definition.create',
+  WORKFLOW_UPDATE: 'workflow.definition.update',
+  WORKFLOW_DELETE: 'workflow.definition.delete',
+  WORKFLOW_EXECUTE: 'workflow.execute',
+  WORKFLOW_REVIEW: 'work_order.review',
+  // Notifications
+  NOTIFICATIONS_VIEW: 'notifications.view',
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -289,5 +298,47 @@ export const PERMISSION_CATALOG: ReadonlyArray<{
     name: 'Xóa kế hoạch bảo trì',
     group: 'Kỹ thuật',
     description: 'Xóa bỏ các kế hoạch bảo trì khỏi hệ thống.',
+  },
+  {
+    key: PERMISSIONS.WORKFLOW_VIEW,
+    name: 'Xem mẫu quy trình',
+    group: 'Quy trình',
+    description: 'Xem danh sách và sơ đồ mẫu quy trình (Mini-map).',
+  },
+  {
+    key: PERMISSIONS.WORKFLOW_CREATE,
+    name: 'Tạo mẫu quy trình',
+    group: 'Quy trình',
+    description: 'Thiết kế và tạo mới mẫu quy trình.',
+  },
+  {
+    key: PERMISSIONS.WORKFLOW_UPDATE,
+    name: 'Cập nhật mẫu quy trình',
+    group: 'Quy trình',
+    description: 'Chỉnh sửa cấu hình node, tác nhân và biểu mẫu.',
+  },
+  {
+    key: PERMISSIONS.WORKFLOW_DELETE,
+    name: 'Xóa mẫu quy trình',
+    group: 'Quy trình',
+    description: 'Xóa các mẫu quy trình không còn sử dụng.',
+  },
+  {
+    key: PERMISSIONS.WORKFLOW_EXECUTE,
+    name: 'Thực thi quy trình',
+    group: 'Quy trình',
+    description: 'Hoàn thành hoặc từ chối các bước trong luồng quy trình.',
+  },
+  {
+    key: PERMISSIONS.WORKFLOW_REVIEW,
+    name: 'Kiểm tra & nghiệm thu',
+    group: 'Kỹ thuật',
+    description: 'Review và nghiệm thu kết quả công việc kỹ thuật.',
+  },
+  {
+    key: PERMISSIONS.NOTIFICATIONS_VIEW,
+    name: 'Xem thông báo',
+    group: 'Thông báo',
+    description: 'Nhận và xem thông báo giao việc, nhắc SLA trong hệ thống.',
   },
 ];

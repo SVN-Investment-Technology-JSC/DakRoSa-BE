@@ -27,6 +27,8 @@ import { EquipmentModule } from './equipment/equipment.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { WorkOrderModule } from './work-order/work-order.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
+import { WorkflowModule } from './workflow/workflow.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -76,6 +78,8 @@ import { MaintenanceModule } from './maintenance/maintenance.module';
     InventoryModule,
     WorkOrderModule,
     MaintenanceModule,
+    WorkflowModule,
+    NotificationModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

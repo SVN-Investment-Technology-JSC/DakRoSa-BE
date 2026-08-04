@@ -21,3 +21,7 @@ export * from './work-order.entity';
 export * from './work-order-log.entity';
 export * from './work-order-material.entity';
 export * from './maintenance-plan.entity';
+export * from './workflow-template.entity';
+export * from './workflow-node.entity';
+export * from './workflow-transition.entity';
+export * from './notification.entity';
