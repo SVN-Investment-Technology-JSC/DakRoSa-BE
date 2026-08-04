@@ -134,6 +134,10 @@ export class WorkflowNodeInputDto {
 }
 
 export class WorkflowTransitionInputDto {
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @IsString()
   @IsNotEmpty()
   @MaxLength(80)
@@ -144,11 +148,11 @@ export class WorkflowTransitionInputDto {
   @MaxLength(80)
   targetKey!: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(80)
   @Matches(/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/)
-  actionKey!: string;
+  actionKey?: string;
 
   @IsString()
   @IsNotEmpty()

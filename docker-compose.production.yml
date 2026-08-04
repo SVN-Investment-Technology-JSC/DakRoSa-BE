@@ -59,7 +59,7 @@ services:
     pull_policy: always
     restart: unless-stopped
     init: true
-    environment:
+    environment: &backend-environment
       NODE_ENV: production
       PORT: "8080"
       APP_ORIGIN: "${APP_ORIGIN:?}"
@@ -86,8 +86,6 @@ services:
       ADMIN_EMAIL: "${ADMIN_EMAIL:-savinahub@gmail.com}"
       ADMIN_PHONE: "${ADMIN_PHONE:-0000000000}"
       ADMIN_JOINED_AT: "${ADMIN_JOINED_AT:-2026-01-01}"
-    command: >-
-      sh -c "pnpm db:migration:run:prod && pnpm db:seed:prod && exec node dist/main.js"
     expose:
       - "8080"
     healthcheck:
@@ -97,11 +95,25 @@ services:
       retries: 10
       start_period: 45s
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
       minio:
+        condition: service_healthy
+
+  migrate:
+    image: ghcr.io/svn-investment-technology-jsc/dakrosa-be:${BACKEND_IMAGE_TAG:-production}
+    pull_policy: always
+    restart: "no"
+    init: true
+    environment: *backend-environment
+    command: >-
+      sh -c "pnpm db:migration:run:prod && pnpm db:seed:prod"
+    depends_on:
+      postgres:
         condition: service_healthy
 
   frontend:
