@@ -1057,7 +1057,8 @@ export class WorkflowService {
   ): Array<WorkflowTransitionInputDto & { actionKey: string }> {
     const usedKeysBySource = new Map<string, Set<string>>();
     return transitions.map((transition) => {
-      const used = usedKeysBySource.get(transition.sourceKey) ?? new Set<string>();
+      const used =
+        usedKeysBySource.get(transition.sourceKey) ?? new Set<string>();
       const requested = transition.actionKey?.trim().toLowerCase();
       const base =
         requested && /^[a-z0-9][a-z0-9_.-]*$/.test(requested)
