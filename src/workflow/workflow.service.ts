@@ -16,6 +16,7 @@ import { TenantMembershipEntity } from '../database/entities/tenant-membership.e
 import { WorkflowActionEntity } from '../database/entities/workflow-action.entity';
 import {
   WorkflowAssigneeRuleEntity,
+  WorkflowAssignmentRole,
   WorkflowAssigneeType,
 } from '../database/entities/workflow-assignee-rule.entity';
 import { WorkflowDefinitionEntity } from '../database/entities/workflow-definition.entity';
@@ -582,7 +583,11 @@ export class WorkflowService {
       let task: WorkflowTaskEntity | undefined;
       for (const candidate of candidateTasks) {
         const assigned = await assignmentRepo.exists({
-          where: { taskId: candidate.id, userId: user.id },
+          where: {
+            taskId: candidate.id,
+            userId: user.id,
+            type: In(['candidate', 'assignee']),
+          },
         });
         if (
           assigned ||
@@ -966,6 +971,8 @@ export class WorkflowService {
             subjectId: assignee.subjectId ?? null,
             fieldKey: assignee.fieldKey ?? null,
             assigneeVariableKey: assignee.assigneeVariableKey?.trim() || null,
+            assignmentRole:
+              assignee.assignmentRole ?? WorkflowAssignmentRole.EXECUTOR,
             strategy: assignee.strategy ?? 'ANY',
             quorum: assignee.quorum ?? null,
             config: assignee.config ?? {},
@@ -1220,6 +1227,7 @@ export class WorkflowService {
           subjectId: rule.subjectId ?? undefined,
           fieldKey: rule.fieldKey ?? undefined,
           assigneeVariableKey: rule.assigneeVariableKey ?? undefined,
+          assignmentRole: rule.assignmentRole,
           strategy: rule.strategy,
           quorum: rule.quorum ?? undefined,
           config: rule.config,
@@ -1245,6 +1253,7 @@ export class WorkflowService {
           subjectId: rule.subjectId ?? undefined,
           fieldKey: rule.fieldKey ?? undefined,
           assigneeVariableKey: rule.assigneeVariableKey ?? undefined,
+          assignmentRole: rule.assignmentRole,
           strategy: rule.strategy,
           quorum: rule.quorum ?? undefined,
           config: rule.config,
@@ -1552,31 +1561,53 @@ export class WorkflowService {
         payload: { tokenId: token.id },
       }),
     );
-    const userIds = await this.resolveAssignees(manager, instance, node);
-    if (!userIds.length) {
+    const executorIds = await this.resolveAssignees(
+      manager,
+      instance,
+      node,
+      WorkflowAssignmentRole.EXECUTOR,
+    );
+    if (!executorIds.length) {
       task.status = 'blocked';
       await taskRepo.save(task);
       instance.status = 'blocked';
       await manager.getRepository(WorkflowInstanceEntity).save(instance);
       return;
     }
-    await manager.getRepository(WorkflowTaskAssignmentEntity).save(
-      userIds.map((userId) => ({
+    const observerIds = (await this.resolveAssignees(
+      manager,
+      instance,
+      node,
+      WorkflowAssignmentRole.OBSERVER,
+    )).filter((userId) => !executorIds.includes(userId));
+    await manager.getRepository(WorkflowTaskAssignmentEntity).save([
+      ...executorIds.map((userId) => ({
         taskId: task.id,
         userId,
-        type: userIds.length === 1 ? 'assignee' : 'candidate',
+        type:
+          executorIds.length === 1
+            ? ('assignee' as const)
+            : ('candidate' as const),
         actedAt: null,
       })),
-    );
+      ...observerIds.map((userId) => ({
+        taskId: task.id,
+        userId,
+        type: 'watcher' as const,
+        actedAt: null,
+      })),
+    ]);
     const tenantSlug =
       typeof instance.context['tenantSlug'] === 'string'
         ? instance.context['tenantSlug']
         : '';
     await manager.getRepository(NotificationEntity).save(
-      userIds.map((userId) => ({
+      [...executorIds, ...observerIds].map((userId) => ({
         tenantId: instance.tenantId,
         userId,
-        type: 'workflow.task.assigned',
+        type: observerIds.includes(userId)
+          ? 'workflow.task.watching'
+          : 'workflow.task.assigned',
         title: `Công việc mới: ${node.name}`,
         body: 'Bạn có một công việc bảo trì đang chờ xử lý.',
         resourceType: instance.resourceType,
@@ -1584,7 +1615,7 @@ export class WorkflowService {
         actionUrl: tenantSlug
           ? `/t/${tenantSlug}/work-orders/${instance.resourceId}`
           : `/work-orders/${instance.resourceId}`,
-        dedupeKey: `workflow-task:${task.id}`,
+        dedupeKey: `workflow-task:${task.id}:${observerIds.includes(userId) ? 'watcher' : 'assignee'}`,
         readAt: null,
       })),
     );
@@ -1594,10 +1625,17 @@ export class WorkflowService {
     manager: EntityManager,
     instance: WorkflowInstanceEntity,
     node: WorkflowNodeEntity,
+    assignmentRole: WorkflowAssignmentRole = WorkflowAssignmentRole.EXECUTOR,
   ): Promise<string[]> {
-    const rules = await manager.getRepository(WorkflowAssigneeRuleEntity).find({
-      where: { nodeId: node.id },
-    });
+    const rules = (
+      await manager.getRepository(WorkflowAssigneeRuleEntity).find({
+        where: { nodeId: node.id },
+      })
+    ).filter(
+      (rule) =>
+        (rule.assignmentRole ?? WorkflowAssignmentRole.EXECUTOR) ===
+        assignmentRole,
+    );
     const memberships = manager.getRepository(TenantMembershipEntity);
     const candidates = new Set<string>();
     const variableKeys = [
@@ -1719,7 +1757,11 @@ export class WorkflowService {
         matches.forEach((membership) => candidates.add(membership.userId));
       }
     }
-    if (!candidates.size && !variableKeys.length) {
+    if (
+      assignmentRole === WorkflowAssignmentRole.EXECUTOR &&
+      !candidates.size &&
+      !variableKeys.length
+    ) {
       const fallback = instance.context['createdBy'];
       if (typeof fallback === 'string') candidates.add(fallback);
     }
@@ -1822,7 +1864,10 @@ export class WorkflowService {
   ) {
     const assignedTaskIds = new Set(
       assignments
-        .filter((assignment) => assignment.userId === user.id)
+        .filter(
+          (assignment) =>
+            assignment.userId === user.id && assignment.type !== 'watcher',
+        )
         .map((assignment) => assignment.taskId),
     );
     const eligible = tasks.filter((task) => {

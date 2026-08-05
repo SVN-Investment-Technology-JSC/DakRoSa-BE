@@ -19,6 +19,7 @@ import {
 } from 'class-validator';
 import {
   WorkflowAssigneeType,
+  WorkflowAssignmentRole,
   WorkflowNodeType,
   WorkflowRoleMappingTargetType,
 } from '../../database/entities';
@@ -77,6 +78,10 @@ export class WorkflowAssigneeRuleInputDto {
   @MaxLength(80)
   @Matches(/^[a-zA-Z][a-zA-Z0-9_.-]*$/)
   assigneeVariableKey?: string;
+
+  @IsOptional()
+  @IsEnum(WorkflowAssignmentRole)
+  assignmentRole?: WorkflowAssignmentRole;
 
   @IsOptional()
   @IsIn(['ANY', 'ALL', 'QUORUM'])

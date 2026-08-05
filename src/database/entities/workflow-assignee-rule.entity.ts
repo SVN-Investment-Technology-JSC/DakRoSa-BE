@@ -19,6 +19,11 @@ export enum WorkflowAssigneeType {
   MANAGER_OF_REQUESTER = 'MANAGER_OF_REQUESTER',
 }
 
+export enum WorkflowAssignmentRole {
+  EXECUTOR = 'EXECUTOR',
+  OBSERVER = 'OBSERVER',
+}
+
 @Entity({ name: 'workflow_assignee_rules' })
 export class WorkflowAssigneeRuleEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -53,6 +58,14 @@ export class WorkflowAssigneeRuleEntity {
     nullable: true,
   })
   assigneeVariableKey!: string | null;
+
+  @Column({
+    name: 'assignment_role',
+    type: 'varchar',
+    length: 20,
+    default: WorkflowAssignmentRole.EXECUTOR,
+  })
+  assignmentRole!: WorkflowAssignmentRole;
 
   @Column({ length: 20, default: 'ANY' })
   strategy!: 'ANY' | 'ALL' | 'QUORUM';
