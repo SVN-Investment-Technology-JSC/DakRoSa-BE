@@ -1017,7 +1017,9 @@ export class WorkflowService {
         const hasAssigneeVariable = Boolean(rule.assigneeVariableKey);
         if (
           rule.assigneeVariableKey !== undefined &&
-          !/^[a-zA-Z][a-zA-Z0-9_.-]{0,79}$/.test(rule.assigneeVariableKey)
+          !/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,79}$/.test(
+            rule.assigneeVariableKey,
+          )
         ) {
           errors.push(
             `Quy tắc phân công tại "${node.name}" có assigneeVariableKey không đúng định dạng.`,

@@ -76,7 +76,7 @@ export class WorkflowAssigneeRuleInputDto {
   @IsOptional()
   @IsString()
   @MaxLength(80)
-  @Matches(/^[a-zA-Z][a-zA-Z0-9_.-]*$/)
+  @Matches(/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/)
   assigneeVariableKey?: string;
 
   @IsOptional()
@@ -213,7 +213,7 @@ export class WorkflowRoleMappingInputDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(80)
-  @Matches(/^[a-zA-Z][a-zA-Z0-9_.-]*$/)
+  @Matches(/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/)
   variableKey!: string;
 
   @IsEnum(WorkflowRoleMappingTargetType)
@@ -240,6 +240,6 @@ export class ResolveWorkflowRoleMappingsDto {
   @ArrayMaxSize(100)
   @ArrayUnique()
   @IsString({ each: true })
-  @Matches(/^[a-zA-Z][a-zA-Z0-9_.-]*$/, { each: true })
+  @Matches(/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/, { each: true })
   variableKeys!: string[];
 }
