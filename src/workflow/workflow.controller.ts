@@ -136,6 +136,12 @@ export class WorkflowController {
     return this.service.getRoleMappings(user.tenantId, id);
   }
 
+  @Get('master-board')
+  @RequirePermissions(PERMISSIONS.WORKFLOW_DEFINITION_VIEW)
+  globalMasterBoard(@CurrentUser() user: AuthUser) {
+    return this.service.getGlobalMasterBoard(user.tenantId);
+  }
+
   @Put('definitions/:id/master-board')
   @RequirePermissions(PERMISSIONS.WORKFLOW_DEFINITION_MANAGE)
   saveMasterBoard(

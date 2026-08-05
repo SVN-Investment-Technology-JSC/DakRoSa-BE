@@ -157,6 +157,40 @@ export class WorkflowService {
     };
   }
 
+  async getGlobalMasterBoard(tenantId: string) {
+    const definitions = await this.listDefinitions(tenantId);
+    const definitionIds = definitions.map((definition) => definition.id);
+    const mappings = definitionIds.length
+      ? await this.roleMappings.find({
+          where: { definitionId: In(definitionIds) },
+          order: { variableKey: 'ASC' },
+        })
+      : [];
+    const graphs = await Promise.all(
+      definitions.map((definition) =>
+        this.getDefinition(tenantId, definition.id),
+      ),
+    );
+    return {
+      definitions: graphs.map((definition) => ({
+        id: definition.id,
+        key: definition.key,
+        name: definition.name,
+        status: definition.status,
+        requiredVariableKeys: [
+          ...new Set(
+            (definition.graph?.nodes ?? []).flatMap((node) =>
+              node.assignees
+                .map((rule) => rule.assigneeVariableKey?.trim())
+                .filter((key): key is string => Boolean(key)),
+            ),
+          ),
+        ].sort(),
+      })),
+      mappings,
+    };
+  }
+
   private async listDefinitionsByStatuses(
     tenantId: string,
     statuses: WorkflowDefinitionEntity['status'][],
@@ -1581,13 +1615,21 @@ export class WorkflowService {
           },
         })
       : [];
-    const roleMappingByVariable = new Map(
-      roleMappings.map((mapping) => [mapping.variableKey, mapping]),
-    );
+    const roleMappingByVariable = new Map<
+      string,
+      WorkflowRoleMappingEntity[]
+    >();
+    for (const mapping of roleMappings) {
+      roleMappingByVariable.set(mapping.variableKey, [
+        ...(roleMappingByVariable.get(mapping.variableKey) ?? []),
+        mapping,
+      ]);
+    }
     for (const rule of rules) {
       if (rule.assigneeVariableKey) {
-        const mapping = roleMappingByVariable.get(rule.assigneeVariableKey);
-        if (mapping) {
+        const mappings =
+          roleMappingByVariable.get(rule.assigneeVariableKey) ?? [];
+        for (const mapping of mappings) {
           await this.addRoleMappingCandidates(
             memberships,
             instance.tenantId,

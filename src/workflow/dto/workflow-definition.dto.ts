@@ -221,7 +221,10 @@ export class WorkflowRoleMappingInputDto {
 export class SaveWorkflowRoleMappingsDto {
   @IsArray()
   @ArrayMaxSize(100)
-  @ArrayUnique((mapping: WorkflowRoleMappingInputDto) => mapping.variableKey)
+  @ArrayUnique(
+    (mapping: WorkflowRoleMappingInputDto) =>
+      `${mapping.variableKey}:${mapping.targetType}:${mapping.targetId}`,
+  )
   @ValidateNested({ each: true })
   @Type(() => WorkflowRoleMappingInputDto)
   mappings!: WorkflowRoleMappingInputDto[];

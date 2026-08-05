@@ -19,9 +19,11 @@ export enum WorkflowRoleMappingTargetType {
 }
 
 @Entity({ name: 'workflow_role_mappings' })
-@Unique('UQ_workflow_role_mappings_definition_variable', [
+@Unique('UQ_workflow_role_mappings_definition_variable_target', [
   'definitionId',
   'variableKey',
+  'targetType',
+  'targetId',
 ])
 export class WorkflowRoleMappingEntity {
   @PrimaryGeneratedColumn('uuid')

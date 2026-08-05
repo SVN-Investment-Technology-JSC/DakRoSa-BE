@@ -251,7 +251,7 @@ describe('WorkflowService role mappings', () => {
     });
   });
 
-  it('uses a master-board variable to resolve the task recipient', async () => {
+  it('uses every master-board mapping for a task recipient variable', async () => {
     const { service } = createService();
     const ruleRepository = {
       find: jest.fn().mockResolvedValue([
@@ -268,6 +268,11 @@ describe('WorkflowService role mappings', () => {
           variableKey: 'executor',
           targetType: WorkflowRoleMappingTargetType.USER,
           targetId: 'user-2',
+        },
+        {
+          variableKey: 'executor',
+          targetType: WorkflowRoleMappingTargetType.USER,
+          targetId: 'user-3',
         },
       ]),
     };
@@ -301,7 +306,7 @@ describe('WorkflowService role mappings', () => {
         } as unknown as WorkflowInstanceEntity,
         { id: 'node-1' } as WorkflowNodeEntity,
       ),
-    ).resolves.toEqual(['user-2']);
+    ).resolves.toEqual(['user-2', 'user-3']);
   });
 
   it('does not fall back to the creator when a master-board variable is missing', async () => {
