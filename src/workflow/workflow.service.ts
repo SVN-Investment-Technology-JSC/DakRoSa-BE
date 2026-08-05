@@ -178,6 +178,26 @@ export class WorkflowService {
         key: definition.key,
         name: definition.name,
         status: definition.status,
+        requiredVariables: Array.from(
+          (definition.graph?.nodes ?? []).reduce(
+            (variables, node) => {
+              for (const rule of node.assignees) {
+                const variableKey = rule.assigneeVariableKey?.trim();
+                if (!variableKey) continue;
+                const assignmentRoles = variables.get(variableKey) ?? new Set();
+                assignmentRoles.add(rule.assignmentRole);
+                variables.set(variableKey, assignmentRoles);
+              }
+              return variables;
+            },
+            new Map<string, Set<WorkflowAssignmentRole>>(),
+          ),
+        )
+          .map(([key, assignmentRoles]) => ({
+            key,
+            assignmentRoles: Array.from(assignmentRoles).sort(),
+          }))
+          .sort((left, right) => left.key.localeCompare(right.key)),
         requiredVariableKeys: [
           ...new Set(
             (definition.graph?.nodes ?? []).flatMap((node) =>
