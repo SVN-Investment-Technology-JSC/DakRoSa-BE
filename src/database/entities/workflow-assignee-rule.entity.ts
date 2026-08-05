@@ -46,6 +46,14 @@ export class WorkflowAssigneeRuleEntity {
   })
   fieldKey!: string | null;
 
+  @Column({
+    name: 'assignee_variable_key',
+    type: 'varchar',
+    length: 80,
+    nullable: true,
+  })
+  assigneeVariableKey!: string | null;
+
   @Column({ length: 20, default: 'ANY' })
   strategy!: 'ANY' | 'ALL' | 'QUORUM';
 
