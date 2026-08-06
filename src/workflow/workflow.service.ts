@@ -10,10 +10,13 @@ import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { MaintenanceScheduleEntity } from '../database/entities/maintenance-schedule.entity';
 import { NotificationEntity } from '../database/entities/notification.entity';
 import { OrganizationUnitEntity } from '../database/entities/organization-unit.entity';
+import { PositionEntity } from '../database/entities/position.entity';
+import { RoleEntity } from '../database/entities/role.entity';
 import { TenantMembershipEntity } from '../database/entities/tenant-membership.entity';
 import { WorkflowActionEntity } from '../database/entities/workflow-action.entity';
 import {
   WorkflowAssigneeRuleEntity,
+  WorkflowAssignmentRole,
   WorkflowAssigneeType,
 } from '../database/entities/workflow-assignee-rule.entity';
 import { WorkflowDefinitionEntity } from '../database/entities/workflow-definition.entity';
@@ -22,6 +25,10 @@ import {
   WorkflowNodeEntity,
   WorkflowNodeType,
 } from '../database/entities/workflow-node.entity';
+import {
+  WorkflowRoleMappingEntity,
+  WorkflowRoleMappingTargetType,
+} from '../database/entities/workflow-role-mapping.entity';
 import { WorkflowTaskAssignmentEntity } from '../database/entities/workflow-task-assignment.entity';
 import { WorkflowTaskEntity } from '../database/entities/workflow-task.entity';
 import { WorkflowTokenEntity } from '../database/entities/workflow-token.entity';
@@ -31,7 +38,9 @@ import { AuthUser } from '../common/interfaces/auth-user.interface';
 import {
   CloneWorkflowDefinitionDto,
   CreateWorkflowDefinitionDto,
+  ResolveWorkflowRoleMappingsDto,
   SaveWorkflowDraftDto,
+  SaveWorkflowRoleMappingsDto,
   WorkflowActionDto,
   WorkflowNodeInputDto,
   WorkflowTransitionInputDto,
@@ -82,6 +91,8 @@ export class WorkflowService {
     private readonly taskAssignments: Repository<WorkflowTaskAssignmentEntity>,
     @InjectRepository(WorkflowActionEntity)
     private readonly actions: Repository<WorkflowActionEntity>,
+    @InjectRepository(WorkflowRoleMappingEntity)
+    private readonly roleMappings: Repository<WorkflowRoleMappingEntity>,
   ) {}
 
   async listDefinitions(tenantId: string) {
@@ -90,6 +101,138 @@ export class WorkflowService {
 
   async listArchivedDefinitions(tenantId: string) {
     return this.listDefinitionsByStatuses(tenantId, ['archived']);
+  }
+
+  async getRoleMappings(tenantId: string, definitionId: string) {
+    await this.requireDefinition(tenantId, definitionId);
+    const mappings = await this.roleMappings.find({
+      where: { definitionId },
+      order: { variableKey: 'ASC' },
+    });
+    return { definitionId, mappings };
+  }
+
+  async saveRoleMappings(
+    tenantId: string,
+    definitionId: string,
+    dto: SaveWorkflowRoleMappingsDto,
+  ) {
+    await this.dataSource.transaction(async (manager) => {
+      await this.requireDefinitionWithManager(manager, tenantId, definitionId);
+      await this.validateRoleMappingTargets(manager, tenantId, dto);
+      const mappings = manager.getRepository(WorkflowRoleMappingEntity);
+      await mappings.delete({ definitionId });
+      if (dto.mappings.length) {
+        await mappings.save(
+          mappings.create(
+            dto.mappings.map((mapping) => ({
+              definitionId,
+              variableKey: mapping.variableKey.trim(),
+              targetType: mapping.targetType,
+              targetId: mapping.targetId,
+            })),
+          ),
+        );
+      }
+    });
+    return this.getRoleMappings(tenantId, definitionId);
+  }
+
+  async resolveRoleMappings(
+    tenantId: string,
+    definitionId: string,
+    dto: ResolveWorkflowRoleMappingsDto,
+  ) {
+    await this.requireDefinition(tenantId, definitionId);
+    const mappings = await this.roleMappings.find({
+      where: { definitionId, variableKey: In(dto.variableKeys) },
+      order: { variableKey: 'ASC' },
+    });
+    const mappedKeys = new Set(mappings.map((mapping) => mapping.variableKey));
+    return {
+      definitionId,
+      mappings,
+      missingVariableKeys: dto.variableKeys.filter(
+        (key) => !mappedKeys.has(key),
+      ),
+    };
+  }
+
+  async getGlobalMasterBoard(tenantId: string) {
+    const definitions = await this.listDefinitions(tenantId);
+    const definitionIds = definitions.map((definition) => definition.id);
+    const mappings = definitionIds.length
+      ? await this.roleMappings.find({
+          where: { definitionId: In(definitionIds) },
+          order: { variableKey: 'ASC' },
+        })
+      : [];
+    const graphs = await Promise.all(
+      definitions.map((definition) =>
+        this.getDefinition(tenantId, definition.id),
+      ),
+    );
+    return {
+      definitions: graphs.map((definition) => ({
+        id: definition.id,
+        key: definition.key,
+        name: definition.name,
+        status: definition.status,
+        requiredVariables: Array.from(
+          (definition.graph?.nodes ?? []).reduce(
+            (variables, node) => {
+              for (const rule of node.assignees) {
+                const variableKey = rule.assigneeVariableKey?.trim();
+                if (!variableKey) continue;
+                const variable = variables.get(variableKey) ?? {
+                  assignmentRoles: new Set<WorkflowAssignmentRole>(),
+                  nodeUsages: [] as Array<{
+                    nodeKey: string;
+                    nodeName: string;
+                    assignmentRole: WorkflowAssignmentRole;
+                  }>,
+                };
+                variable.assignmentRoles.add(rule.assignmentRole);
+                variable.nodeUsages.push({
+                  nodeKey: node.key,
+                  nodeName: node.name,
+                  assignmentRole: rule.assignmentRole,
+                });
+                variables.set(variableKey, variable);
+              }
+              return variables;
+            },
+            new Map<
+              string,
+              {
+                assignmentRoles: Set<WorkflowAssignmentRole>;
+                nodeUsages: Array<{
+                  nodeKey: string;
+                  nodeName: string;
+                  assignmentRole: WorkflowAssignmentRole;
+                }>;
+              }
+            >(),
+          ),
+        )
+          .map(([key, variable]) => ({
+            key,
+            assignmentRoles: Array.from(variable.assignmentRoles).sort(),
+            nodeUsages: variable.nodeUsages,
+          }))
+          .sort((left, right) => left.key.localeCompare(right.key)),
+        requiredVariableKeys: [
+          ...new Set(
+            (definition.graph?.nodes ?? []).flatMap((node) =>
+              node.assignees
+                .map((rule) => rule.assigneeVariableKey?.trim())
+                .filter((key): key is string => Boolean(key)),
+            ),
+          ),
+        ].sort(),
+      })),
+      mappings,
+    };
   }
 
   private async listDefinitionsByStatuses(
@@ -483,7 +626,11 @@ export class WorkflowService {
       let task: WorkflowTaskEntity | undefined;
       for (const candidate of candidateTasks) {
         const assigned = await assignmentRepo.exists({
-          where: { taskId: candidate.id, userId: user.id },
+          where: {
+            taskId: candidate.id,
+            userId: user.id,
+            type: In(['candidate', 'assignee']),
+          },
         });
         if (
           assigned ||
@@ -650,6 +797,52 @@ export class WorkflowService {
     });
     if (!definition) throw new NotFoundException('Workflow not found.');
     return definition;
+  }
+
+  private async validateRoleMappingTargets(
+    manager: EntityManager,
+    tenantId: string,
+    dto: SaveWorkflowRoleMappingsDto,
+  ) {
+    for (const mapping of dto.mappings) {
+      const exists = await this.roleMappingTargetExists(
+        manager,
+        tenantId,
+        mapping.targetType,
+        mapping.targetId,
+      );
+      if (!exists) {
+        throw new BadRequestException(
+          `Đối tượng ánh xạ cho biến "${mapping.variableKey}" không tồn tại hoặc không thuộc doanh nghiệp.`,
+        );
+      }
+    }
+  }
+
+  private async roleMappingTargetExists(
+    manager: EntityManager,
+    tenantId: string,
+    targetType: WorkflowRoleMappingTargetType,
+    targetId: string,
+  ) {
+    switch (targetType) {
+      case WorkflowRoleMappingTargetType.USER:
+        return manager.getRepository(TenantMembershipEntity).exists({
+          where: { tenantId, userId: targetId, status: 'active' },
+        });
+      case WorkflowRoleMappingTargetType.ROLE:
+        return manager.getRepository(RoleEntity).exists({
+          where: { tenantId, id: targetId },
+        });
+      case WorkflowRoleMappingTargetType.POSITION:
+        return manager.getRepository(PositionEntity).exists({
+          where: { tenantId, id: targetId },
+        });
+      case WorkflowRoleMappingTargetType.ORGANIZATION_UNIT:
+        return manager.getRepository(OrganizationUnitEntity).exists({
+          where: { tenantId, id: targetId },
+        });
+    }
   }
 
   private async requireDefinitionWithManager(
@@ -820,6 +1013,9 @@ export class WorkflowService {
             type: assignee.type,
             subjectId: assignee.subjectId ?? null,
             fieldKey: assignee.fieldKey ?? null,
+            assigneeVariableKey: assignee.assigneeVariableKey?.trim() || null,
+            assignmentRole:
+              assignee.assignmentRole ?? WorkflowAssignmentRole.EXECUTOR,
             strategy: assignee.strategy ?? 'ANY',
             quorum: assignee.quorum ?? null,
             config: assignee.config ?? {},
@@ -861,6 +1057,15 @@ export class WorkflowService {
         warnings.push(`Bước "${node.name}" chưa cấu hình SLA.`);
       }
       for (const rule of node.assignees) {
+        const hasAssigneeVariable = Boolean(rule.assigneeVariableKey);
+        if (
+          rule.assigneeVariableKey !== undefined &&
+          !/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,79}$/.test(rule.assigneeVariableKey)
+        ) {
+          errors.push(
+            `Quy tắc phân công tại "${node.name}" có assigneeVariableKey không đúng định dạng.`,
+          );
+        }
         if (
           [
             WorkflowAssigneeType.USER,
@@ -868,13 +1073,15 @@ export class WorkflowService {
             WorkflowAssigneeType.POSITION,
             WorkflowAssigneeType.ORGANIZATION_UNIT,
           ].includes(rule.type) &&
-          !rule.subjectId
+          !rule.subjectId &&
+          !hasAssigneeVariable
         ) {
           errors.push(`Quy tắc phân công tại "${node.name}" thiếu đối tượng.`);
         }
         if (
           rule.type === WorkflowAssigneeType.REQUEST_FIELD &&
-          !rule.fieldKey
+          !rule.fieldKey &&
+          !hasAssigneeVariable
         ) {
           errors.push(`Quy tắc phân công tại "${node.name}" thiếu field key.`);
         }
@@ -1062,6 +1269,8 @@ export class WorkflowService {
           type: rule.type,
           subjectId: rule.subjectId ?? undefined,
           fieldKey: rule.fieldKey ?? undefined,
+          assigneeVariableKey: rule.assigneeVariableKey ?? undefined,
+          assignmentRole: rule.assignmentRole,
           strategy: rule.strategy,
           quorum: rule.quorum ?? undefined,
           config: rule.config,
@@ -1086,6 +1295,8 @@ export class WorkflowService {
           type: rule.type,
           subjectId: rule.subjectId ?? undefined,
           fieldKey: rule.fieldKey ?? undefined,
+          assigneeVariableKey: rule.assigneeVariableKey ?? undefined,
+          assignmentRole: rule.assignmentRole,
           strategy: rule.strategy,
           quorum: rule.quorum ?? undefined,
           config: rule.config,
@@ -1393,31 +1604,55 @@ export class WorkflowService {
         payload: { tokenId: token.id },
       }),
     );
-    const userIds = await this.resolveAssignees(manager, instance, node);
-    if (!userIds.length) {
+    const executorIds = await this.resolveAssignees(
+      manager,
+      instance,
+      node,
+      WorkflowAssignmentRole.EXECUTOR,
+    );
+    if (!executorIds.length) {
       task.status = 'blocked';
       await taskRepo.save(task);
       instance.status = 'blocked';
       await manager.getRepository(WorkflowInstanceEntity).save(instance);
       return;
     }
-    await manager.getRepository(WorkflowTaskAssignmentEntity).save(
-      userIds.map((userId) => ({
+    const observerIds = (
+      await this.resolveAssignees(
+        manager,
+        instance,
+        node,
+        WorkflowAssignmentRole.OBSERVER,
+      )
+    ).filter((userId) => !executorIds.includes(userId));
+    await manager.getRepository(WorkflowTaskAssignmentEntity).save([
+      ...executorIds.map((userId) => ({
         taskId: task.id,
         userId,
-        type: userIds.length === 1 ? 'assignee' : 'candidate',
+        type:
+          executorIds.length === 1
+            ? ('assignee' as const)
+            : ('candidate' as const),
         actedAt: null,
       })),
-    );
+      ...observerIds.map((userId) => ({
+        taskId: task.id,
+        userId,
+        type: 'watcher' as const,
+        actedAt: null,
+      })),
+    ]);
     const tenantSlug =
       typeof instance.context['tenantSlug'] === 'string'
         ? instance.context['tenantSlug']
         : '';
     await manager.getRepository(NotificationEntity).save(
-      userIds.map((userId) => ({
+      [...executorIds, ...observerIds].map((userId) => ({
         tenantId: instance.tenantId,
         userId,
-        type: 'workflow.task.assigned',
+        type: observerIds.includes(userId)
+          ? 'workflow.task.watching'
+          : 'workflow.task.assigned',
         title: `Công việc mới: ${node.name}`,
         body: 'Bạn có một công việc bảo trì đang chờ xử lý.',
         resourceType: instance.resourceType,
@@ -1425,7 +1660,7 @@ export class WorkflowService {
         actionUrl: tenantSlug
           ? `/t/${tenantSlug}/work-orders/${instance.resourceId}`
           : `/work-orders/${instance.resourceId}`,
-        dedupeKey: `workflow-task:${task.id}`,
+        dedupeKey: `workflow-task:${task.id}:${observerIds.includes(userId) ? 'watcher' : 'assignee'}`,
         readAt: null,
       })),
     );
@@ -1435,14 +1670,57 @@ export class WorkflowService {
     manager: EntityManager,
     instance: WorkflowInstanceEntity,
     node: WorkflowNodeEntity,
+    assignmentRole: WorkflowAssignmentRole = WorkflowAssignmentRole.EXECUTOR,
   ): Promise<string[]> {
-    const rules = await manager.getRepository(WorkflowAssigneeRuleEntity).find({
-      where: { nodeId: node.id },
-    });
+    const rules = (
+      await manager.getRepository(WorkflowAssigneeRuleEntity).find({
+        where: { nodeId: node.id },
+      })
+    ).filter(
+      (rule) =>
+        (rule.assignmentRole ?? WorkflowAssignmentRole.EXECUTOR) ===
+        assignmentRole,
+    );
     const memberships = manager.getRepository(TenantMembershipEntity);
     const candidates = new Set<string>();
+    const variableKeys = [
+      ...new Set(
+        rules
+          .map((rule) => rule.assigneeVariableKey)
+          .filter((key): key is string => Boolean(key)),
+      ),
+    ];
+    const roleMappings = variableKeys.length
+      ? await manager.getRepository(WorkflowRoleMappingEntity).find({
+          where: {
+            definitionId: instance.definitionId,
+            variableKey: In(variableKeys),
+          },
+        })
+      : [];
+    const roleMappingByVariable = new Map<
+      string,
+      WorkflowRoleMappingEntity[]
+    >();
+    for (const mapping of roleMappings) {
+      roleMappingByVariable.set(mapping.variableKey, [
+        ...(roleMappingByVariable.get(mapping.variableKey) ?? []),
+        mapping,
+      ]);
+    }
     for (const rule of rules) {
-      if (
+      if (rule.assigneeVariableKey) {
+        const mappings =
+          roleMappingByVariable.get(rule.assigneeVariableKey) ?? [];
+        for (const mapping of mappings) {
+          await this.addRoleMappingCandidates(
+            memberships,
+            instance.tenantId,
+            mapping,
+            candidates,
+          );
+        }
+      } else if (
         rule.type === WorkflowAssigneeType.USER &&
         rule.subjectId &&
         (await memberships.exists({
@@ -1524,11 +1802,70 @@ export class WorkflowService {
         matches.forEach((membership) => candidates.add(membership.userId));
       }
     }
-    if (!candidates.size) {
+    if (
+      assignmentRole === WorkflowAssignmentRole.EXECUTOR &&
+      !candidates.size &&
+      !variableKeys.length
+    ) {
       const fallback = instance.context['createdBy'];
       if (typeof fallback === 'string') candidates.add(fallback);
     }
     return [...candidates];
+  }
+
+  private async addRoleMappingCandidates(
+    memberships: Repository<TenantMembershipEntity>,
+    tenantId: string,
+    mapping: WorkflowRoleMappingEntity,
+    candidates: Set<string>,
+  ) {
+    switch (mapping.targetType) {
+      case WorkflowRoleMappingTargetType.USER:
+        if (
+          await memberships.exists({
+            where: {
+              tenantId,
+              userId: mapping.targetId,
+              status: 'active',
+            },
+          })
+        ) {
+          candidates.add(mapping.targetId);
+        }
+        return;
+      case WorkflowRoleMappingTargetType.ORGANIZATION_UNIT: {
+        const matches = await memberships.find({
+          where: {
+            tenantId,
+            organizationUnitId: mapping.targetId,
+            status: 'active',
+          },
+        });
+        matches.forEach((membership) => candidates.add(membership.userId));
+        return;
+      }
+      case WorkflowRoleMappingTargetType.POSITION: {
+        const matches = await memberships.find({
+          where: {
+            tenantId,
+            positionId: mapping.targetId,
+            status: 'active',
+          },
+        });
+        matches.forEach((membership) => candidates.add(membership.userId));
+        return;
+      }
+      case WorkflowRoleMappingTargetType.ROLE: {
+        const matches = await memberships
+          .createQueryBuilder('membership')
+          .innerJoin('membership.roles', 'role')
+          .where('membership.tenant_id = :tenantId', { tenantId })
+          .andWhere('membership.status = :status', { status: 'active' })
+          .andWhere('role.id = :roleId', { roleId: mapping.targetId })
+          .getMany();
+        matches.forEach((membership) => candidates.add(membership.userId));
+      }
+    }
   }
 
   private async refreshInstanceStatus(
@@ -1572,7 +1909,10 @@ export class WorkflowService {
   ) {
     const assignedTaskIds = new Set(
       assignments
-        .filter((assignment) => assignment.userId === user.id)
+        .filter(
+          (assignment) =>
+            assignment.userId === user.id && assignment.type !== 'watcher',
+        )
         .map((assignment) => assignment.taskId),
     );
     const eligible = tasks.filter((task) => {

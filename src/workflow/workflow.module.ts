@@ -9,6 +9,7 @@ import { WorkflowAssigneeRuleEntity } from '../database/entities/workflow-assign
 import { WorkflowDefinitionEntity } from '../database/entities/workflow-definition.entity';
 import { WorkflowInstanceEntity } from '../database/entities/workflow-instance.entity';
 import { WorkflowNodeEntity } from '../database/entities/workflow-node.entity';
+import { WorkflowRoleMappingEntity } from '../database/entities/workflow-role-mapping.entity';
 import { WorkflowTaskAssignmentEntity } from '../database/entities/workflow-task-assignment.entity';
 import { WorkflowTaskEntity } from '../database/entities/workflow-task.entity';
 import { WorkflowTokenEntity } from '../database/entities/workflow-token.entity';
@@ -23,6 +24,7 @@ import { WorkflowService } from './workflow.service';
       WorkflowDefinitionEntity,
       WorkflowVersionEntity,
       WorkflowNodeEntity,
+      WorkflowRoleMappingEntity,
       WorkflowTransitionEntity,
       WorkflowAssigneeRuleEntity,
       WorkflowInstanceEntity,

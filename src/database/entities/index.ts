@@ -24,6 +24,7 @@ export * from './maintenance-plan.entity';
 export * from './workflow-definition.entity';
 export * from './workflow-version.entity';
 export * from './workflow-node.entity';
+export * from './workflow-role-mapping.entity';
 export * from './workflow-transition.entity';
 export * from './workflow-assignee-rule.entity';
 export * from './workflow-instance.entity';

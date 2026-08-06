@@ -20,7 +20,9 @@ import { AuthUser } from '../common/interfaces/auth-user.interface';
 import {
   CloneWorkflowDefinitionDto,
   CreateWorkflowDefinitionDto,
+  ResolveWorkflowRoleMappingsDto,
   SaveWorkflowDraftDto,
+  SaveWorkflowRoleMappingsDto,
   WorkflowActionDto,
 } from './dto/workflow-definition.dto';
 import { WorkflowService } from './workflow.service';
@@ -123,6 +125,41 @@ export class WorkflowController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.service.deleteDefinitionPermanently(user.tenantId, id);
+  }
+
+  @Get('definitions/:id/master-board')
+  @RequirePermissions(PERMISSIONS.WORKFLOW_DEFINITION_VIEW)
+  masterBoard(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.service.getRoleMappings(user.tenantId, id);
+  }
+
+  @Get('master-board')
+  @RequirePermissions(PERMISSIONS.WORKFLOW_DEFINITION_VIEW)
+  globalMasterBoard(@CurrentUser() user: AuthUser) {
+    return this.service.getGlobalMasterBoard(user.tenantId);
+  }
+
+  @Put('definitions/:id/master-board')
+  @RequirePermissions(PERMISSIONS.WORKFLOW_DEFINITION_MANAGE)
+  saveMasterBoard(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SaveWorkflowRoleMappingsDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.service.saveRoleMappings(user.tenantId, id, dto);
+  }
+
+  @Post('definitions/:id/master-board/resolve')
+  @RequirePermissions(PERMISSIONS.WORKFLOW_DEFINITION_VIEW)
+  resolveMasterBoard(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ResolveWorkflowRoleMappingsDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.service.resolveRoleMappings(user.tenantId, id, dto);
   }
 
   @Get('instances/:id')

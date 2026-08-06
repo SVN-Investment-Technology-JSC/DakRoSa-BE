@@ -11,6 +11,9 @@ import {
   WorkflowTaskEntity,
   WorkflowTransitionEntity,
   WorkflowVersionEntity,
+  WorkflowRoleMappingEntity,
+  WorkflowRoleMappingTargetType,
+  TenantMembershipEntity,
 } from '../database/entities';
 import { WorkflowService } from './workflow.service';
 
@@ -38,6 +41,9 @@ function createService() {
   const versions = {
     find: jest.fn(),
   };
+  const roleMappings = {
+    find: jest.fn(),
+  };
   const dataSource = {
     transaction: jest.fn(),
   };
@@ -54,9 +60,10 @@ function createService() {
     emptyRepository as Repository<WorkflowTaskEntity>,
     emptyRepository as Repository<WorkflowTaskAssignmentEntity>,
     emptyRepository as Repository<WorkflowActionEntity>,
+    roleMappings as unknown as Repository<WorkflowRoleMappingEntity>,
   );
 
-  return { service, dataSource, definitions, versions };
+  return { service, dataSource, definitions, versions, roleMappings };
 }
 
 function configureTransaction(
@@ -190,5 +197,157 @@ describe('WorkflowService archive lifecycle', () => {
     expect(repositories.definitionRepository.remove).toHaveBeenCalledWith(
       definition,
     );
+  });
+});
+
+describe('WorkflowService role mappings', () => {
+  it('returns only mappings for a workflow in the current tenant', async () => {
+    const { service, definitions, roleMappings } = createService();
+    definitions.findOne.mockResolvedValue(workflowDefinition('draft'));
+    roleMappings.find.mockResolvedValue([
+      {
+        id: 'mapping-1',
+        definitionId,
+        variableKey: 'technical_reviewer',
+        targetType: WorkflowRoleMappingTargetType.ROLE,
+        targetId: 'role-1',
+      },
+    ]);
+
+    await expect(
+      service.getRoleMappings(tenantId, definitionId),
+    ).resolves.toEqual({
+      definitionId,
+      mappings: [
+        expect.objectContaining({ variableKey: 'technical_reviewer' }),
+      ],
+    });
+    expect(roleMappings.find).toHaveBeenCalledWith({
+      where: { definitionId },
+      order: { variableKey: 'ASC' },
+    });
+  });
+
+  it('reports variables that have not been configured in the master board', async () => {
+    const { service, definitions, roleMappings } = createService();
+    definitions.findOne.mockResolvedValue(workflowDefinition('draft'));
+    roleMappings.find.mockResolvedValue([
+      {
+        definitionId,
+        variableKey: 'executor',
+        targetType: WorkflowRoleMappingTargetType.POSITION,
+        targetId: 'position-1',
+      },
+    ]);
+
+    await expect(
+      service.resolveRoleMappings(tenantId, definitionId, {
+        variableKeys: ['executor', 'technical_reviewer'],
+      }),
+    ).resolves.toMatchObject({
+      definitionId,
+      missingVariableKeys: ['technical_reviewer'],
+      mappings: [expect.objectContaining({ variableKey: 'executor' })],
+    });
+  });
+
+  it('uses every master-board mapping for a task recipient variable', async () => {
+    const { service } = createService();
+    const ruleRepository = {
+      find: jest.fn().mockResolvedValue([
+        {
+          assigneeVariableKey: 'executor',
+          type: 'ROLE',
+          subjectId: null,
+        },
+      ]),
+    };
+    const mappingRepository = {
+      find: jest.fn().mockResolvedValue([
+        {
+          variableKey: 'executor',
+          targetType: WorkflowRoleMappingTargetType.USER,
+          targetId: 'user-2',
+        },
+        {
+          variableKey: 'executor',
+          targetType: WorkflowRoleMappingTargetType.USER,
+          targetId: 'user-3',
+        },
+      ]),
+    };
+    const membershipRepository = {
+      exists: jest.fn().mockResolvedValue(true),
+    };
+    const manager = {
+      getRepository: jest.fn((entity: unknown) => {
+        if (entity === WorkflowAssigneeRuleEntity) return ruleRepository;
+        if (entity === WorkflowRoleMappingEntity) return mappingRepository;
+        if (entity === TenantMembershipEntity) return membershipRepository;
+        throw new Error('Unexpected repository.');
+      }),
+    };
+    const internals = service as unknown as {
+      resolveAssignees: (
+        manager: EntityManager,
+        instance: WorkflowInstanceEntity,
+        node: WorkflowNodeEntity,
+      ) => Promise<string[]>;
+    };
+
+    await expect(
+      internals.resolveAssignees(
+        manager as unknown as EntityManager,
+        {
+          id: 'instance-1',
+          tenantId,
+          definitionId,
+          context: { createdBy: 'creator-1' },
+        } as unknown as WorkflowInstanceEntity,
+        { id: 'node-1' } as WorkflowNodeEntity,
+      ),
+    ).resolves.toEqual(['user-2', 'user-3']);
+  });
+
+  it('does not fall back to the creator when a master-board variable is missing', async () => {
+    const { service } = createService();
+    const ruleRepository = {
+      find: jest.fn().mockResolvedValue([
+        {
+          assigneeVariableKey: 'technical_reviewer',
+          type: 'ROLE',
+          subjectId: null,
+        },
+      ]),
+    };
+    const mappingRepository = { find: jest.fn().mockResolvedValue([]) };
+    const manager = {
+      getRepository: jest.fn((entity: unknown) => {
+        if (entity === WorkflowAssigneeRuleEntity) return ruleRepository;
+        if (entity === WorkflowRoleMappingEntity) return mappingRepository;
+        if (entity === TenantMembershipEntity) return {};
+        throw new Error('Unexpected repository.');
+      }),
+    };
+    const internals = service as unknown as {
+      resolveAssignees: (
+        manager: EntityManager,
+        instance: WorkflowInstanceEntity,
+        node: WorkflowNodeEntity,
+      ) => Promise<string[]>;
+    };
+
+    await expect(
+      internals.resolveAssignees(
+        manager as unknown as EntityManager,
+        {
+          id: 'instance-1',
+          tenantId,
+          definitionId,
+          context: { createdBy: 'creator-1' },
+        } as unknown as WorkflowInstanceEntity,
+        { id: 'node-1' } as WorkflowNodeEntity,
+      ),
+    ).resolves.toEqual([]);
   });
 });

@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
+  ArrayUnique,
   IsArray,
   IsEnum,
   IsInt,
@@ -18,7 +19,9 @@ import {
 } from 'class-validator';
 import {
   WorkflowAssigneeType,
+  WorkflowAssignmentRole,
   WorkflowNodeType,
+  WorkflowRoleMappingTargetType,
 } from '../../database/entities';
 
 export class CreateWorkflowDefinitionDto {
@@ -69,6 +72,16 @@ export class WorkflowAssigneeRuleInputDto {
   @IsString()
   @MaxLength(120)
   fieldKey?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  @Matches(/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/)
+  assigneeVariableKey?: string;
+
+  @IsOptional()
+  @IsEnum(WorkflowAssignmentRole)
+  assignmentRole?: WorkflowAssignmentRole;
 
   @IsOptional()
   @IsIn(['ANY', 'ALL', 'QUORUM'])
@@ -194,4 +207,39 @@ export class WorkflowActionDto {
   @IsString()
   @MaxLength(120)
   idempotencyKey?: string;
+}
+
+export class WorkflowRoleMappingInputDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(80)
+  @Matches(/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/)
+  variableKey!: string;
+
+  @IsEnum(WorkflowRoleMappingTargetType)
+  targetType!: WorkflowRoleMappingTargetType;
+
+  @IsUUID()
+  targetId!: string;
+}
+
+export class SaveWorkflowRoleMappingsDto {
+  @IsArray()
+  @ArrayMaxSize(100)
+  @ArrayUnique(
+    (mapping: WorkflowRoleMappingInputDto) =>
+      `${mapping.variableKey}:${mapping.targetType}:${mapping.targetId}`,
+  )
+  @ValidateNested({ each: true })
+  @Type(() => WorkflowRoleMappingInputDto)
+  mappings!: WorkflowRoleMappingInputDto[];
+}
+
+export class ResolveWorkflowRoleMappingsDto {
+  @IsArray()
+  @ArrayMaxSize(100)
+  @ArrayUnique()
+  @IsString({ each: true })
+  @Matches(/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/, { each: true })
+  variableKeys!: string[];
 }
