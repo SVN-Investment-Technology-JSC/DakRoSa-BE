@@ -1060,9 +1060,7 @@ export class WorkflowService {
         const hasAssigneeVariable = Boolean(rule.assigneeVariableKey);
         if (
           rule.assigneeVariableKey !== undefined &&
-          !/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,79}$/.test(
-            rule.assigneeVariableKey,
-          )
+          !/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,79}$/.test(rule.assigneeVariableKey)
         ) {
           errors.push(
             `Quy tắc phân công tại "${node.name}" có assigneeVariableKey không đúng định dạng.`,
@@ -1619,12 +1617,14 @@ export class WorkflowService {
       await manager.getRepository(WorkflowInstanceEntity).save(instance);
       return;
     }
-    const observerIds = (await this.resolveAssignees(
-      manager,
-      instance,
-      node,
-      WorkflowAssignmentRole.OBSERVER,
-    )).filter((userId) => !executorIds.includes(userId));
+    const observerIds = (
+      await this.resolveAssignees(
+        manager,
+        instance,
+        node,
+        WorkflowAssignmentRole.OBSERVER,
+      )
+    ).filter((userId) => !executorIds.includes(userId));
     await manager.getRepository(WorkflowTaskAssignmentEntity).save([
       ...executorIds.map((userId) => ({
         taskId: task.id,
