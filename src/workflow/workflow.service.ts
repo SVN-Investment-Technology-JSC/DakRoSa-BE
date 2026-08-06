@@ -184,18 +184,41 @@ export class WorkflowService {
               for (const rule of node.assignees) {
                 const variableKey = rule.assigneeVariableKey?.trim();
                 if (!variableKey) continue;
-                const assignmentRoles = variables.get(variableKey) ?? new Set();
-                assignmentRoles.add(rule.assignmentRole);
-                variables.set(variableKey, assignmentRoles);
+                const variable = variables.get(variableKey) ?? {
+                  assignmentRoles: new Set<WorkflowAssignmentRole>(),
+                  nodeUsages: [] as Array<{
+                    nodeKey: string;
+                    nodeName: string;
+                    assignmentRole: WorkflowAssignmentRole;
+                  }>,
+                };
+                variable.assignmentRoles.add(rule.assignmentRole);
+                variable.nodeUsages.push({
+                  nodeKey: node.key,
+                  nodeName: node.name,
+                  assignmentRole: rule.assignmentRole,
+                });
+                variables.set(variableKey, variable);
               }
               return variables;
             },
-            new Map<string, Set<WorkflowAssignmentRole>>(),
+            new Map<
+              string,
+              {
+                assignmentRoles: Set<WorkflowAssignmentRole>;
+                nodeUsages: Array<{
+                  nodeKey: string;
+                  nodeName: string;
+                  assignmentRole: WorkflowAssignmentRole;
+                }>;
+              }
+            >(),
           ),
         )
-          .map(([key, assignmentRoles]) => ({
+          .map(([key, variable]) => ({
             key,
-            assignmentRoles: Array.from(assignmentRoles).sort(),
+            assignmentRoles: Array.from(variable.assignmentRoles).sort(),
+            nodeUsages: variable.nodeUsages,
           }))
           .sort((left, right) => left.key.localeCompare(right.key)),
         requiredVariableKeys: [
