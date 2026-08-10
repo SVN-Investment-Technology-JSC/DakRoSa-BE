@@ -30,6 +30,7 @@ import { WorkOrderModule } from './work-order/work-order.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { WorkflowModule } from './workflow/workflow.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { PersonnelModule } from './personnel/personnel.module';
 
 @Module({
   imports: [
@@ -82,6 +83,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     WorkflowModule,
     NotificationsModule,
     MaintenanceModule,
+    PersonnelModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

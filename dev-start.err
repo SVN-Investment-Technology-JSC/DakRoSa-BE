@@ -1,0 +1,110 @@
+$ cross-env NODE_ENV=development nest start --watch
+[31m[Nest] 25592  - [39m08/10/2026, 2:45:29 PM [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (1)...[39m
+DataTypeNotSupportedError: Data type "Object" in "DonVi.parent_id" is not supported by "postgres" database.
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:133:31)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:43:18)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:753:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async DataSource.initialize (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25592  - [39m08/10/2026, 2:45:29 PM [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (2)...[39m
+DataTypeNotSupportedError: Data type "Object" in "DonVi.parent_id" is not supported by "postgres" database.
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:133:31)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:43:18)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:753:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async DataSource.initialize (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25592  - [39m08/10/2026, 2:45:29 PM [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (3)...[39m
+DataTypeNotSupportedError: Data type "Object" in "DonVi.parent_id" is not supported by "postgres" database.
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:133:31)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:43:18)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:753:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async DataSource.initialize (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25592  - [39m08/10/2026, 2:45:29 PM [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (4)...[39m
+DataTypeNotSupportedError: Data type "Object" in "DonVi.parent_id" is not supported by "postgres" database.
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:133:31)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:43:18)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:753:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async DataSource.initialize (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25592  - [39m08/10/2026, 2:45:29 PM [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (5)...[39m
+DataTypeNotSupportedError: Data type "Object" in "DonVi.parent_id" is not supported by "postgres" database.
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:133:31)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:43:18)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:753:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async DataSource.initialize (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25592  - [39m08/10/2026, 2:45:29 PM [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (6)...[39m
+DataTypeNotSupportedError: Data type "Object" in "DonVi.parent_id" is not supported by "postgres" database.
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:133:31)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:43:18)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:753:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async DataSource.initialize (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25592  - [39m08/10/2026, 2:45:29 PM [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (7)...[39m
+DataTypeNotSupportedError: Data type "Object" in "DonVi.parent_id" is not supported by "postgres" database.
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:133:31)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:43:18)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:753:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async DataSource.initialize (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25592  - [39m08/10/2026, 2:45:29 PM [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (8)...[39m
+DataTypeNotSupportedError: Data type "Object" in "DonVi.parent_id" is not supported by "postgres" database.
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:133:31)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:43:18)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:753:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async DataSource.initialize (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25592  - [39m08/10/2026, 2:45:29 PM [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (9)...[39m
+DataTypeNotSupportedError: Data type "Object" in "DonVi.parent_id" is not supported by "postgres" database.
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:133:31)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at <anonymous> (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:43:18)
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:753:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async DataSource.initialize (C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\node_modules\.pnpm\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\typeorm\data-source\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25592  - [39m08/10/2026, 2:45:29 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mDataTypeNotSupportedError: Data type "Object" in "DonVi.parent_id" is not supported by "postgres" database.
+    at <anonymous> [90m(C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\[39mnode_modules\[4m.pnpm[24m\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\[4mtypeorm[24m\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:133:31[90m)[39m
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate [90m(C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\[39mnode_modules\[4m.pnpm[24m\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\[4mtypeorm[24m\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:128:18[90m)[39m
+    at <anonymous> [90m(C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\[39mnode_modules\[4m.pnpm[24m\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\[4mtypeorm[24m\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:43:18[90m)[39m
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany [90m(C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\[39mnode_modules\[4m.pnpm[24m\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\[4mtypeorm[24m\metadata-builder\src\metadata-builder\EntityMetadataValidator.ts:42:25[90m)[39m
+    at DataSource.buildMetadatas [90m(C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\[39mnode_modules\[4m.pnpm[24m\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\[4mtypeorm[24m\data-source\src\data-source\DataSource.ts:753:33[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at async DataSource.initialize [90m(C:\Users\dhai3\OneDrive\Máy tính\darosa\DakRoSa-BE\[39mnode_modules\[4m.pnpm[24m\typeorm@0.3.28_ioredis@5.11_561b254ef84a6be64c94e0d7f6e5bb3d\node_modules\[4mtypeorm[24m\data-source\src\data-source\DataSource.ts:264:13[90m)[39m

@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import * as argon2 from 'argon2';
 import { randomBytes } from 'crypto';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
 import { StorageService } from '../storage/storage.service';
 import {
@@ -20,6 +20,8 @@ import {
   OrganizationUnitEntity,
   PermissionEntity,
   PositionEntity,
+  PersonnelEntity,
+  PersonnelAssignmentEntity,
   RoleEntity,
   SiteEntity,
   TenantEntity,
@@ -31,6 +33,9 @@ import {
   CreatePositionDto,
   UpdateOrganizationUnitDto,
   UpdatePositionDto,
+  CreatePersonnelDto,
+  CreatePersonnelAssignmentDto,
+  UpdatePersonnelAssignmentDto,
 } from './dto/organization.dto';
 import { CreateSiteDto, UpdateSiteDto } from './dto/site.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
@@ -48,6 +53,10 @@ export class TenancyService {
     private readonly organizationUnits: Repository<OrganizationUnitEntity>,
     @InjectRepository(PositionEntity)
     private readonly positions: Repository<PositionEntity>,
+    @InjectRepository(PersonnelEntity)
+    private readonly personnel: Repository<PersonnelEntity>,
+    @InjectRepository(PersonnelAssignmentEntity)
+    private readonly personnelAssignments: Repository<PersonnelAssignmentEntity>,
     @InjectRepository(TenantMembershipEntity)
     private readonly memberships: Repository<TenantMembershipEntity>,
     @InjectRepository(RoleEntity)
@@ -148,6 +157,59 @@ export class TenancyService {
 
   async listOrganization(user: AuthUser) {
     return this.listOrganizationForTenant(user.tenantId);
+  }
+
+  async organizationTree(user: AuthUser) {
+    const { units, positions } = await this.listOrganizationForTenant(user.tenantId);
+    const assignments = await this.personnelAssignments.find({
+      where: { tenantId: user.tenantId, endDate: IsNull() },
+      relations: { personnel: true, position: true },
+      order: { rank: 'ASC', startDate: 'ASC' },
+    });
+    const peopleByUnit = new Map<string, unknown[]>();
+    assignments.filter((item) => item.personnel.status === 'active').forEach((item) => {
+      const people = peopleByUnit.get(item.organizationUnitId) ?? [];
+      people.push({ id: item.personnel.id, employeeCode: item.personnel.employeeCode, fullName: item.personnel.fullName, positionName: item.position.name, isPrimary: item.isPrimary, rank: item.rank });
+      peopleByUnit.set(item.organizationUnitId, people);
+    });
+    const nodes = new Map(units.filter((unit) => unit.isActive).map((unit) => [unit.id, { ...unit, personnel: peopleByUnit.get(unit.id) ?? [], children: [] as unknown[] }]));
+    const roots: unknown[] = [];
+    nodes.forEach((node, id) => {
+      const parent = node.parentId ? nodes.get(node.parentId) : undefined;
+      if (parent) parent.children.push(node); else roots.push(node);
+    });
+    return { units: roots, positions: positions.filter((position) => position.isActive) };
+  }
+
+  async createPersonnel(dto: CreatePersonnelDto, user: AuthUser, context: ClientContext): Promise<PersonnelEntity> {
+    const employeeCode = dto.employeeCode.trim().toUpperCase();
+    if (await this.personnel.exists({ where: { tenantId: user.tenantId, employeeCode } })) throw new ConflictException('Mã nhân sự đã tồn tại.');
+    const record = await this.personnel.save(this.personnel.create({ tenantId: user.tenantId, employeeCode, fullName: dto.fullName.trim(), phone: dto.phone?.trim() || null, email: dto.email?.trim() || null, status: dto.status?.trim() || 'active', userId: null }));
+    await this.record(user, context, 'create', 'personnel', record.id, { employeeCode });
+    return record;
+  }
+
+  async createPersonnelAssignment(employeeCode: string, dto: CreatePersonnelAssignmentDto, user: AuthUser, context: ClientContext): Promise<PersonnelAssignmentEntity> {
+    const person = await this.findPersonnel(employeeCode, user.tenantId);
+    await this.findOrganizationUnit(dto.organizationUnitId, user.tenantId);
+    await this.findPosition(dto.positionId, user.tenantId);
+    if (dto.isPrimary) await this.personnelAssignments.update({ tenantId: user.tenantId, personnelId: person.id, isPrimary: true, endDate: IsNull() }, { isPrimary: false });
+    const record = await this.personnelAssignments.save(this.personnelAssignments.create({ tenantId: user.tenantId, personnelId: person.id, organizationUnitId: dto.organizationUnitId, positionId: dto.positionId, isPrimary: dto.isPrimary ?? false, rank: dto.rank ?? 3, startDate: dto.startDate ?? new Date().toISOString().slice(0, 10), endDate: null }));
+    await this.record(user, context, 'create', 'personnel_assignment', record.id, { employeeCode });
+    return record;
+  }
+
+  async updatePersonnelAssignment(employeeCode: string, assignmentId: string, dto: UpdatePersonnelAssignmentDto, user: AuthUser, context: ClientContext): Promise<PersonnelAssignmentEntity> {
+    const person = await this.findPersonnel(employeeCode, user.tenantId);
+    const record = await this.personnelAssignments.findOneBy({ id: assignmentId, tenantId: user.tenantId, personnelId: person.id });
+    if (!record) throw new NotFoundException('Không tìm thấy vị trí công tác.');
+    if (dto.isPrimary !== undefined) record.isPrimary = dto.isPrimary;
+    if (dto.rank !== undefined) record.rank = dto.rank;
+    if (dto.endDate !== undefined) record.endDate = dto.endDate ?? null;
+    if (record.isPrimary && !record.endDate) await this.personnelAssignments.update({ tenantId: user.tenantId, personnelId: person.id, isPrimary: true, endDate: IsNull() }, { isPrimary: false });
+    await this.personnelAssignments.save(record);
+    await this.record(user, context, 'update', 'personnel_assignment', record.id, { employeeCode, fields: Object.keys(dto) });
+    return record;
   }
 
   async createOrganizationUnit(
@@ -739,10 +801,17 @@ export class TenancyService {
     tenantId: string,
   ): Promise<OrganizationUnitEntity> {
     const code = dto.code.trim().toUpperCase();
-    if (await this.organizationUnits.exists({ where: { tenantId, code } })) {
-      throw new ConflictException('Mã đơn vị đã tồn tại.');
+    const existing = await this.organizationUnits.findOneBy({ tenantId, code });
+    await this.assertOrganizationParent(dto.parentId, tenantId, existing?.id);
+    if (existing) {
+      if (existing.isActive) throw new ConflictException('Mã đơn vị đã tồn tại.');
+      existing.parentId = dto.parentId ?? null;
+      existing.name = dto.name.trim();
+      existing.type = dto.type?.trim() || 'department';
+      existing.sortOrder = dto.sortOrder ?? existing.sortOrder;
+      existing.isActive = true;
+      return this.organizationUnits.save(existing);
     }
-    await this.assertOrganizationParent(dto.parentId, tenantId);
     return this.organizationUnits.save(
       this.organizationUnits.create({
         tenantId,
@@ -762,11 +831,16 @@ export class TenancyService {
     tenantId: string,
   ): Promise<PositionEntity> {
     const code = dto.code.trim().toUpperCase();
-    if (await this.positions.exists({ where: { tenantId, code } })) {
-      throw new ConflictException('Mã chức danh đã tồn tại.');
-    }
     if (dto.organizationUnitId) {
       await this.findOrganizationUnit(dto.organizationUnitId, tenantId);
+    }
+    const existing = await this.positions.findOneBy({ tenantId, code });
+    if (existing) {
+      if (existing.isActive) throw new ConflictException('Mã chức danh đã tồn tại.');
+      existing.name = dto.name.trim();
+      existing.organizationUnitId = dto.organizationUnitId ?? null;
+      existing.isActive = true;
+      return this.positions.save(existing);
     }
     return this.positions.save(
       this.positions.create({
@@ -830,6 +904,12 @@ export class TenancyService {
     const position = await this.positions.findOneBy({ id, tenantId });
     if (!position) throw new NotFoundException('Không tìm thấy chức danh.');
     return position;
+  }
+
+  private async findPersonnel(employeeCode: string, tenantId: string): Promise<PersonnelEntity> {
+    const record = await this.personnel.findOneBy({ tenantId, employeeCode: employeeCode.trim().toUpperCase() });
+    if (!record) throw new NotFoundException('Không tìm thấy nhân sự.');
+    return record;
   }
 
   private normalizeModules(modules?: TenantModuleKey[]): TenantModuleKey[] {

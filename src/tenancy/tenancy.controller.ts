@@ -25,6 +25,9 @@ import {
   CreatePositionDto,
   UpdateOrganizationUnitDto,
   UpdatePositionDto,
+  CreatePersonnelDto,
+  CreatePersonnelAssignmentDto,
+  UpdatePersonnelAssignmentDto,
 } from './dto/organization.dto';
 import { CreateSiteDto, UpdateSiteDto } from './dto/site.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
@@ -100,6 +103,38 @@ export class TenancyController {
   @RequirePermissions(PERMISSIONS.ORGANIZATION_VIEW)
   organization(@CurrentUser() user: AuthUser) {
     return this.service.listOrganization(user);
+  }
+
+  @Get('organization/tree')
+  @UseGuards(TenantModuleGuard)
+  @RequireTenantModules('organization')
+  @RequirePermissions(PERMISSIONS.ORGANIZATION_VIEW)
+  organizationTree(@CurrentUser() user: AuthUser) {
+    return this.service.organizationTree(user);
+  }
+
+  @Post('organization/personnel')
+  @UseGuards(TenantModuleGuard)
+  @RequireTenantModules('organization')
+  @RequirePermissions(PERMISSIONS.ORGANIZATION_MANAGE)
+  createPersonnel(@Body() dto: CreatePersonnelDto, @CurrentUser() user: AuthUser, @ClientContextParam() context: ClientContext) {
+    return this.service.createPersonnel(dto, user, context);
+  }
+
+  @Post('organization/personnel/:employeeCode/assignments')
+  @UseGuards(TenantModuleGuard)
+  @RequireTenantModules('organization')
+  @RequirePermissions(PERMISSIONS.ORGANIZATION_MANAGE)
+  createPersonnelAssignment(@Param('employeeCode') employeeCode: string, @Body() dto: CreatePersonnelAssignmentDto, @CurrentUser() user: AuthUser, @ClientContextParam() context: ClientContext) {
+    return this.service.createPersonnelAssignment(employeeCode, dto, user, context);
+  }
+
+  @Patch('organization/personnel/:employeeCode/assignments/:assignmentId')
+  @UseGuards(TenantModuleGuard)
+  @RequireTenantModules('organization')
+  @RequirePermissions(PERMISSIONS.ORGANIZATION_MANAGE)
+  updatePersonnelAssignment(@Param('employeeCode') employeeCode: string, @Param('assignmentId', ParseUUIDPipe) assignmentId: string, @Body() dto: UpdatePersonnelAssignmentDto, @CurrentUser() user: AuthUser, @ClientContextParam() context: ClientContext) {
+    return this.service.updatePersonnelAssignment(employeeCode, assignmentId, dto, user, context);
   }
 
   @Post('organization/units')
