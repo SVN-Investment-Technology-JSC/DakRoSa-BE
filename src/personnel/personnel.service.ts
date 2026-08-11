@@ -5,7 +5,7 @@ import { DonVi } from './entities/don-vi.entity';
 import { PhongBan } from './entities/phong-ban.entity';
 import { NhanSu } from './entities/nhan-su.entity';
 
-type OrganizationTreeNode = {
+export type OrganizationTreeNode = {
   ma_dinh_danh: string;
   ten: string;
   loai: string;
