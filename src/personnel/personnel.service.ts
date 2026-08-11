@@ -5,6 +5,14 @@ import { DonVi } from './entities/don-vi.entity';
 import { PhongBan } from './entities/phong-ban.entity';
 import { NhanSu } from './entities/nhan-su.entity';
 
+type OrganizationTreeNode = {
+  ma_dinh_danh: string;
+  ten: string;
+  loai: string;
+  nhan_su: unknown[];
+  children: OrganizationTreeNode[];
+};
+
 @Injectable()
 export class PersonnelService {
   constructor(
@@ -16,7 +24,7 @@ export class PersonnelService {
     private nhanSuRepository: Repository<NhanSu>,
   ) {}
 
-  async getOrganizationTree(): Promise<any> {
+  async getOrganizationTree(): Promise<OrganizationTreeNode[]> {
     const [allDonVi, allPhongBan, allNhanSu] = await Promise.all([
       this.donViRepository.find(),
       this.phongBanRepository.find(),
@@ -24,7 +32,7 @@ export class PersonnelService {
     ]);
 
     const nhanSuMap = new Map<string, any[]>();
-    allNhanSu.forEach(ns => {
+    allNhanSu.forEach((ns) => {
       if (ns.phong_ban) {
         const key = ns.phong_ban.ma_phong_ban;
         if (!nhanSuMap.has(key)) {
@@ -39,8 +47,8 @@ export class PersonnelService {
       }
     });
 
-    const phongBanMap = new Map<number, any[]>();
-    allPhongBan.forEach(pb => {
+    const phongBanMap = new Map<number, OrganizationTreeNode[]>();
+    allPhongBan.forEach((pb) => {
       const key = pb.don_vi_id;
       if (!phongBanMap.has(key)) {
         phongBanMap.set(key, []);
@@ -54,8 +62,10 @@ export class PersonnelService {
       });
     });
 
-    const buildTree = (donVi: DonVi): any => {
-      const childrenOfDonVi = allDonVi.filter(d => d.parent_id === donVi.id).map(buildTree);
+    const buildTree = (donVi: DonVi): OrganizationTreeNode => {
+      const childrenOfDonVi = allDonVi
+        .filter((d) => d.parent_id === donVi.id)
+        .map(buildTree);
       const phongBanOfDonVi = phongBanMap.get(donVi.id) || [];
 
       return {
@@ -67,7 +77,7 @@ export class PersonnelService {
       };
     };
 
-    const rootDonVis = allDonVi.filter(d => d.parent_id === null);
+    const rootDonVis = allDonVi.filter((d) => d.parent_id === null);
     const tree = rootDonVis.map(buildTree);
 
     return tree;

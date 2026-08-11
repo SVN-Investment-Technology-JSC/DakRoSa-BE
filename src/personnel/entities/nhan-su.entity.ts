@@ -1,5 +1,10 @@
-
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { PhongBan } from './phong-ban.entity';
 import { ChucDanh } from './chuc-danh.entity';
 

@@ -19,6 +19,8 @@ export class AddSongBaOrganizationTitles1797000000000 implements MigrationInterf
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query("DELETE FROM positions WHERE code IN ('TRUONG_BAN_KIEM_SOAT','KIEM_SOAT_VIEN','PHO_TONG_GIAM_DOC_KY_THUAT','PHO_TONG_GIAM_DOC_KINH_DOANH','KE_TOAN_TRUONG') AND metadata->>'systemDefault' = 'true'");
+    await queryRunner.query(
+      "DELETE FROM positions WHERE code IN ('TRUONG_BAN_KIEM_SOAT','KIEM_SOAT_VIEN','PHO_TONG_GIAM_DOC_KY_THUAT','PHO_TONG_GIAM_DOC_KINH_DOANH','KE_TOAN_TRUONG') AND metadata->>'systemDefault' = 'true'",
+    );
   }
 }

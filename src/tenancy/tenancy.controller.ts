@@ -118,7 +118,11 @@ export class TenancyController {
   @UseGuards(TenantModuleGuard)
   @RequireTenantModules('organization')
   @RequirePermissions(PERMISSIONS.ORGANIZATION_MANAGE)
-  createPersonnel(@Body() dto: CreatePersonnelDto, @CurrentUser() user: AuthUser, @ClientContextParam() context: ClientContext) {
+  createPersonnel(
+    @Body() dto: CreatePersonnelDto,
+    @CurrentUser() user: AuthUser,
+    @ClientContextParam() context: ClientContext,
+  ) {
     return this.service.createPersonnel(dto, user, context);
   }
 
@@ -126,7 +130,11 @@ export class TenancyController {
   @UseGuards(TenantModuleGuard)
   @RequireTenantModules('organization')
   @RequirePermissions(PERMISSIONS.ORGANIZATION_MANAGE)
-  createAndAssignPersonnel(@Body() dto: CreateAndAssignPersonnelDto, @CurrentUser() user: AuthUser, @ClientContextParam() context: ClientContext) {
+  createAndAssignPersonnel(
+    @Body() dto: CreateAndAssignPersonnelDto,
+    @CurrentUser() user: AuthUser,
+    @ClientContextParam() context: ClientContext,
+  ) {
     return this.service.createAndAssignPersonnel(dto, user, context);
   }
 
@@ -134,16 +142,38 @@ export class TenancyController {
   @UseGuards(TenantModuleGuard)
   @RequireTenantModules('organization')
   @RequirePermissions(PERMISSIONS.ORGANIZATION_MANAGE)
-  createPersonnelAssignment(@Param('employeeCode') employeeCode: string, @Body() dto: CreatePersonnelAssignmentDto, @CurrentUser() user: AuthUser, @ClientContextParam() context: ClientContext) {
-    return this.service.createPersonnelAssignment(employeeCode, dto, user, context);
+  createPersonnelAssignment(
+    @Param('employeeCode') employeeCode: string,
+    @Body() dto: CreatePersonnelAssignmentDto,
+    @CurrentUser() user: AuthUser,
+    @ClientContextParam() context: ClientContext,
+  ) {
+    return this.service.createPersonnelAssignment(
+      employeeCode,
+      dto,
+      user,
+      context,
+    );
   }
 
   @Patch('organization/personnel/:employeeCode/assignments/:assignmentId')
   @UseGuards(TenantModuleGuard)
   @RequireTenantModules('organization')
   @RequirePermissions(PERMISSIONS.ORGANIZATION_MANAGE)
-  updatePersonnelAssignment(@Param('employeeCode') employeeCode: string, @Param('assignmentId', ParseUUIDPipe) assignmentId: string, @Body() dto: UpdatePersonnelAssignmentDto, @CurrentUser() user: AuthUser, @ClientContextParam() context: ClientContext) {
-    return this.service.updatePersonnelAssignment(employeeCode, assignmentId, dto, user, context);
+  updatePersonnelAssignment(
+    @Param('employeeCode') employeeCode: string,
+    @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
+    @Body() dto: UpdatePersonnelAssignmentDto,
+    @CurrentUser() user: AuthUser,
+    @ClientContextParam() context: ClientContext,
+  ) {
+    return this.service.updatePersonnelAssignment(
+      employeeCode,
+      assignmentId,
+      dto,
+      user,
+      context,
+    );
   }
 
   @Post('organization/units')

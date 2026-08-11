@@ -10,13 +10,22 @@ export const ORGANIZATION_RANKS = [
 /** Standard titles available to every new tenant. They are intentionally global. */
 export const DEFAULT_ORGANIZATION_POSITIONS = [
   { code: 'CHU_TICH_HOI_DONG_QUAN_TRI', name: 'Chủ tịch Hội đồng quản trị' },
-  { code: 'THANH_VIEN_HOI_DONG_QUAN_TRI', name: 'Thành viên Hội đồng quản trị' },
+  {
+    code: 'THANH_VIEN_HOI_DONG_QUAN_TRI',
+    name: 'Thành viên Hội đồng quản trị',
+  },
   { code: 'TRUONG_BAN_KIEM_SOAT', name: 'Trưởng Ban Kiểm soát' },
   { code: 'KIEM_SOAT_VIEN', name: 'Kiểm soát viên' },
   { code: 'TONG_GIAM_DOC', name: 'Tổng Giám đốc' },
   { code: 'PHO_TONG_GIAM_DOC', name: 'Phó Tổng Giám đốc' },
-  { code: 'PHO_TONG_GIAM_DOC_KY_THUAT', name: 'Phó Tổng Giám đốc phụ trách Kỹ thuật' },
-  { code: 'PHO_TONG_GIAM_DOC_KINH_DOANH', name: 'Phó Tổng Giám đốc phụ trách Kinh doanh' },
+  {
+    code: 'PHO_TONG_GIAM_DOC_KY_THUAT',
+    name: 'Phó Tổng Giám đốc phụ trách Kỹ thuật',
+  },
+  {
+    code: 'PHO_TONG_GIAM_DOC_KINH_DOANH',
+    name: 'Phó Tổng Giám đốc phụ trách Kinh doanh',
+  },
   { code: 'GIAM_DOC_KHOI', name: 'Giám đốc Khối' },
   { code: 'KE_TOAN_TRUONG', name: 'Kế toán trưởng' },
   { code: 'GIAM_DOC_CONG_TY', name: 'Giám đốc (Công ty)' },

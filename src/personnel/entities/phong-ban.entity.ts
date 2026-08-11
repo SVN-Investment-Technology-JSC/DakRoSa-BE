@@ -1,5 +1,4 @@
-
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { DonVi } from './don-vi.entity';
 
 @Entity('tb_PhongBan')

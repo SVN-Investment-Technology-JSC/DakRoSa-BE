@@ -125,11 +125,27 @@ export class UpdatePositionDto {
 }
 
 export class CreatePersonnelDto {
-  @ApiProperty({ example: 'NV-0001' }) @IsString() @Length(2, 60) @Matches(/^[A-Za-z0-9_-]+$/) employeeCode!: string;
+  @ApiProperty({ example: 'NV-0001' })
+  @IsString()
+  @Length(2, 60)
+  @Matches(/^[A-Za-z0-9_-]+$/)
+  employeeCode!: string;
   @ApiProperty() @IsString() @Length(2, 180) fullName!: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(30) phone?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(254) email?: string;
-  @ApiPropertyOptional({ example: 'active' }) @IsOptional() @IsString() @MaxLength(30) status?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  phone?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(254)
+  email?: string;
+  @ApiPropertyOptional({ example: 'active' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  status?: string;
   @ApiPropertyOptional() @IsOptional() @IsUUID('4') userId?: string;
 }
 
@@ -137,28 +153,67 @@ export class CreatePersonnelAssignmentDto {
   @ApiProperty() @IsUUID('4') organizationUnitId!: string;
   @ApiProperty() @IsUUID('4') positionId!: string;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() isPrimary?: boolean;
-  @ApiPropertyOptional({ example: 5 }) @IsOptional() @IsInt() @Min(1) @Max(5) rank?: number;
-  @ApiPropertyOptional({ example: '2026-08-10' }) @IsOptional() @IsDateString() startDate?: string;
+  @ApiPropertyOptional({ example: 5 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rank?: number;
+  @ApiPropertyOptional({ example: '2026-08-10' })
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
 }
 
 /** Creates the HR record, optional system account and appointment atomically. */
 export class CreateAndAssignPersonnelDto {
-  @ApiProperty() @IsString() @Length(2, 60) @Matches(/^[A-Za-z0-9_-]+$/) employeeCode!: string;
+  @ApiProperty()
+  @IsString()
+  @Length(2, 60)
+  @Matches(/^[A-Za-z0-9_-]+$/)
+  employeeCode!: string;
   @ApiProperty() @IsString() @Length(2, 180) fullName!: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(30) phone?: string;
-  @ApiPropertyOptional() @IsOptional() @IsEmail() @MaxLength(254) email?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  phone?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsEmail()
+  @MaxLength(254)
+  email?: string;
   @ApiProperty() @IsUUID('4') organizationUnitId!: string;
   @ApiProperty() @IsUUID('4') positionId!: string;
-  @ApiPropertyOptional({ example: 6 }) @IsOptional() @IsInt() @Min(1) @Max(6) rank?: number;
-  @ApiPropertyOptional({ example: '2026-08-10' }) @IsOptional() @IsDateString() startDate?: string;
+  @ApiPropertyOptional({ example: 6 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(6)
+  rank?: number;
+  @ApiPropertyOptional({ example: '2026-08-10' })
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() createAccount?: boolean;
-  @ApiPropertyOptional() @IsOptional() @IsString() @Length(3, 80) username?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() @Length(8, 128) password?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @Length(3, 80)
+  username?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @Length(8, 128)
+  password?: string;
   @ApiPropertyOptional() @IsOptional() @IsUUID('4') roleId?: string;
 }
 
 export class UpdatePersonnelAssignmentDto {
   @ApiPropertyOptional() @IsOptional() @IsBoolean() isPrimary?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(1) @Max(6) rank?: number;
-  @ApiPropertyOptional({ example: '2026-12-31' }) @IsOptional() @IsDateString() endDate?: string | null;
+  @ApiPropertyOptional({ example: '2026-12-31' })
+  @IsOptional()
+  @IsDateString()
+  endDate?: string | null;
 }

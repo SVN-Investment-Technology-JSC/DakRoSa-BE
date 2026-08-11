@@ -3,7 +3,9 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class AddDefaultOrganizationRanksAndPositions1796800000000 implements MigrationInterface {
   name = 'AddDefaultOrganizationRanksAndPositions1796800000000';
   async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query('ALTER TABLE personnel_assignments ALTER COLUMN rank SET DEFAULT 5');
+    await queryRunner.query(
+      'ALTER TABLE personnel_assignments ALTER COLUMN rank SET DEFAULT 5',
+    );
     await queryRunner.query(`
       INSERT INTO positions (tenant_id, organization_unit_id, code, name, is_active, metadata)
       SELECT tenants.id, NULL, defaults.code, defaults.name, true, '{"systemDefault": true}'::jsonb
@@ -19,7 +21,11 @@ export class AddDefaultOrganizationRanksAndPositions1796800000000 implements Mig
     `);
   }
   async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query("DELETE FROM positions WHERE metadata->>'systemDefault' = 'true'");
-    await queryRunner.query('ALTER TABLE personnel_assignments ALTER COLUMN rank SET DEFAULT 3');
+    await queryRunner.query(
+      "DELETE FROM positions WHERE metadata->>'systemDefault' = 'true'",
+    );
+    await queryRunner.query(
+      'ALTER TABLE personnel_assignments ALTER COLUMN rank SET DEFAULT 3',
+    );
   }
 }

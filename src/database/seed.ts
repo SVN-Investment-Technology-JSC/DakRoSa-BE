@@ -142,7 +142,9 @@ async function seed(): Promise<void> {
   await seedOrganizationDemo(AppDataSource, tenant);
 
   // Never print credentials or token material. This line only confirms completion.
-  process.stdout.write('Database seed completed, including organization demo data.\n');
+  process.stdout.write(
+    'Database seed completed, including organization demo data.\n',
+  );
   await AppDataSource.destroy();
 }
 
