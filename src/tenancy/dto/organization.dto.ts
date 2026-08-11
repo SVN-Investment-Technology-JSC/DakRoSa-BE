@@ -128,6 +128,7 @@ export class CreatePersonnelDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(30) phone?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(254) email?: string;
   @ApiPropertyOptional({ example: 'active' }) @IsOptional() @IsString() @MaxLength(30) status?: string;
+  @ApiPropertyOptional() @IsOptional() @IsUUID('4') userId?: string;
 }
 
 export class CreatePersonnelAssignmentDto {
