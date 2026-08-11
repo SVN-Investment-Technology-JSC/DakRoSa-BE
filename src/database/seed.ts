@@ -5,6 +5,7 @@ import {
   PERMISSION_CATALOG,
 } from '../common/constants/permissions';
 import AppDataSource from './data-source';
+import { seedOrganizationDemo } from './seeds/organization-demo.seed';
 import {
   PermissionEntity,
   RoleEntity,
@@ -138,8 +139,12 @@ async function seed(): Promise<void> {
   membership.roles = membership.roles.filter((role) => role.code !== 'admin');
   await membershipRepository.save(membership);
 
+  await seedOrganizationDemo(AppDataSource, tenant);
+
   // Never print credentials or token material. This line only confirms completion.
-  process.stdout.write('Database seed completed.\n');
+  process.stdout.write(
+    'Database seed completed, including organization demo data.\n',
+  );
   await AppDataSource.destroy();
 }
 

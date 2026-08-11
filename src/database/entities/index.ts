@@ -3,6 +3,8 @@ export * from './auth-session.entity';
 export * from './permission.entity';
 export * from './organization-unit.entity';
 export * from './position.entity';
+export * from './personnel.entity';
+export * from './personnel-assignment.entity';
 export * from './role.entity';
 export * from './site.entity';
 export * from './signature-request.entity';
