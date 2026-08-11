@@ -1,0 +1,36 @@
+export const ORGANIZATION_RANKS = [
+  { value: 1, name: 'Quản lý cấp cao' },
+  { value: 2, name: 'Lãnh đạo Công ty' },
+  { value: 3, name: 'Lãnh đạo Nhà máy' },
+  { value: 4, name: 'Quản lý Bộ phận/Phòng ban' },
+  { value: 5, name: 'Giám sát/Trung gian' },
+  { value: 6, name: 'Nhân viên/Chuyên viên' },
+] as const;
+
+/** Standard titles available to every new tenant. They are intentionally global. */
+export const DEFAULT_ORGANIZATION_POSITIONS = [
+  { code: 'CHU_TICH_HOI_DONG_QUAN_TRI', name: 'Chủ tịch Hội đồng quản trị' },
+  { code: 'THANH_VIEN_HOI_DONG_QUAN_TRI', name: 'Thành viên Hội đồng quản trị' },
+  { code: 'TRUONG_BAN_KIEM_SOAT', name: 'Trưởng Ban Kiểm soát' },
+  { code: 'KIEM_SOAT_VIEN', name: 'Kiểm soát viên' },
+  { code: 'TONG_GIAM_DOC', name: 'Tổng Giám đốc' },
+  { code: 'PHO_TONG_GIAM_DOC', name: 'Phó Tổng Giám đốc' },
+  { code: 'PHO_TONG_GIAM_DOC_KY_THUAT', name: 'Phó Tổng Giám đốc phụ trách Kỹ thuật' },
+  { code: 'PHO_TONG_GIAM_DOC_KINH_DOANH', name: 'Phó Tổng Giám đốc phụ trách Kinh doanh' },
+  { code: 'GIAM_DOC_KHOI', name: 'Giám đốc Khối' },
+  { code: 'KE_TOAN_TRUONG', name: 'Kế toán trưởng' },
+  { code: 'GIAM_DOC_CONG_TY', name: 'Giám đốc (Công ty)' },
+  { code: 'PHO_GIAM_DOC_CONG_TY', name: 'Phó Giám đốc (Công ty)' },
+  { code: 'GIAM_DOC_NHA_MAY', name: 'Giám đốc Nhà máy' },
+  { code: 'PHO_GIAM_DOC_NHA_MAY', name: 'Phó Giám đốc Nhà máy' },
+  { code: 'QUAN_DOC', name: 'Quản đốc' },
+  { code: 'TRUONG_BO_PHAN', name: 'Trưởng Bộ phận' },
+  { code: 'TRUONG_PHONG', name: 'Trưởng phòng' },
+  { code: 'TO_TRUONG', name: 'Tổ trưởng' },
+  { code: 'TRUONG_CA_VAN_HANH', name: 'Trưởng ca vận hành' },
+  { code: 'NHOM_TRUONG', name: 'Nhóm trưởng' },
+  { code: 'QUAN_TRI_HE_THONG', name: 'Quản trị hệ thống' },
+  { code: 'VAN_HANH_VIEN', name: 'Vận hành viên' },
+  { code: 'NHAN_VIEN_SUA_CHUA', name: 'Nhân viên sửa chữa' },
+  { code: 'NHAN_VIEN', name: 'Nhân viên' },
+] as const;

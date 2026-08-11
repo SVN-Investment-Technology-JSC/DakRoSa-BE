@@ -17,7 +17,7 @@ export class PersonnelAssignmentEntity {
   @Column({ name: 'position_id', type: 'uuid' }) @Index() positionId!: string;
   @ManyToOne(() => PositionEntity, { onDelete: 'RESTRICT' }) @JoinColumn({ name: 'position_id' }) position!: PositionEntity;
   @Column({ name: 'is_primary', default: false }) isPrimary!: boolean;
-  @Column({ type: 'smallint', default: 3 }) rank!: number;
+  @Column({ type: 'smallint', default: 6 }) rank!: number;
   @Column({ name: 'start_date', type: 'date' }) startDate!: string;
   @Column({ name: 'end_date', type: 'date', nullable: true }) endDate!: string | null;
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;

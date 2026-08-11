@@ -27,6 +27,7 @@ import {
   UpdatePositionDto,
   CreatePersonnelDto,
   CreatePersonnelAssignmentDto,
+  CreateAndAssignPersonnelDto,
   UpdatePersonnelAssignmentDto,
 } from './dto/organization.dto';
 import { CreateSiteDto, UpdateSiteDto } from './dto/site.dto';
@@ -119,6 +120,14 @@ export class TenancyController {
   @RequirePermissions(PERMISSIONS.ORGANIZATION_MANAGE)
   createPersonnel(@Body() dto: CreatePersonnelDto, @CurrentUser() user: AuthUser, @ClientContextParam() context: ClientContext) {
     return this.service.createPersonnel(dto, user, context);
+  }
+
+  @Post('organization/personnel/appoint')
+  @UseGuards(TenantModuleGuard)
+  @RequireTenantModules('organization')
+  @RequirePermissions(PERMISSIONS.ORGANIZATION_MANAGE)
+  createAndAssignPersonnel(@Body() dto: CreateAndAssignPersonnelDto, @CurrentUser() user: AuthUser, @ClientContextParam() context: ClientContext) {
+    return this.service.createAndAssignPersonnel(dto, user, context);
   }
 
   @Post('organization/personnel/:employeeCode/assignments')
