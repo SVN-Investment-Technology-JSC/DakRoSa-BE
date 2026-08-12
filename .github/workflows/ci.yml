@@ -53,6 +53,12 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Verify production artefacts
+        run: |
+          test -f dist/main.js
+          test -f dist/database/data-source.js
+          test -f dist/database/seed.js
+
   validate-main-promotion:
     name: Validate main promotion source
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
