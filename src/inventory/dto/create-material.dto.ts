@@ -18,7 +18,7 @@ export class CreateMaterialDto {
   @IsString()
   name!: string;
 
-  @ApiPropertyOptional({ description: 'Material category' })
+  @ApiPropertyOptional({ description: 'Material category: SPARE_PART, CONSUMABLE, TOOL, RAW_MATERIAL' })
   @IsOptional()
   @IsString()
   category?: string;
@@ -28,9 +28,25 @@ export class CreateMaterialDto {
   @IsString()
   unit!: string;
 
+  @ApiPropertyOptional({ description: 'Specifications / Technical standards' })
+  @IsOptional()
+  @IsString()
+  specifications?: string;
+
+  @ApiPropertyOptional({ description: 'Manufacturer' })
+  @IsOptional()
+  @IsString()
+  manufacturer?: string;
+
   @ApiPropertyOptional({ description: 'Minimum stock level warning threshold' })
   @IsOptional()
   @IsNumber()
   @Min(0)
   minStock?: number;
+
+  @ApiPropertyOptional({ description: 'Maximum stock limit' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  maxStock?: number;
 }

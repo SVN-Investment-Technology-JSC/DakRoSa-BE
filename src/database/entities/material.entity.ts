@@ -33,8 +33,17 @@ export class MaterialEntity {
   @Column({ length: 50 })
   unit!: string;
 
+  @Column({ type: 'text', nullable: true })
+  specifications!: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  manufacturer!: string | null;
+
   @Column({ name: 'min_stock', type: 'int', default: 0 })
   minStock!: number;
+
+  @Column({ name: 'max_stock', type: 'int', default: 0 })
+  maxStock!: number;
 
   @Column({ name: 'is_active', default: true })
   isActive!: boolean;

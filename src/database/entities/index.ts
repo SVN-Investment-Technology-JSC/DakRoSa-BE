@@ -16,6 +16,7 @@ export * from './user.entity';
 export * from './equipment.entity';
 export * from './equipment-document.entity';
 export * from './warehouse.entity';
+export * from './warehouse-location.entity';
 export * from './material.entity';
 export * from './material-inventory.entity';
 export * from './inventory-transaction.entity';

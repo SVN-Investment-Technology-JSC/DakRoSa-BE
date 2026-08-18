@@ -11,6 +11,16 @@ import { MaterialEntity } from './material.entity';
 import { WarehouseEntity } from './warehouse.entity';
 import { UserEntity } from './user.entity';
 
+export type InventoryTransactionType =
+  | 'IMPORT'
+  | 'EXPORT'
+  | 'TRANSFER'
+  | 'BORROW'
+  | 'RETURN'
+  | 'ADJUST'
+  | 'IN'
+  | 'OUT';
+
 @Entity({ name: 'inventory_transactions' })
 export class InventoryTransactionEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -22,6 +32,9 @@ export class InventoryTransactionEntity {
   @ManyToOne(() => TenantEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'tenant_id' })
   tenant!: TenantEntity;
+
+  @Column({ name: 'transaction_code', type: 'varchar', length: 100, nullable: true })
+  transactionCode!: string | null;
 
   @Column({ name: 'warehouse_id', type: 'uuid' })
   warehouseId!: string;
@@ -37,14 +50,20 @@ export class InventoryTransactionEntity {
   @JoinColumn({ name: 'material_id' })
   material!: MaterialEntity;
 
-  @Column({ length: 50 })
-  type!: 'IMPORT' | 'EXPORT';
+  @Column({ type: 'varchar', length: 50 })
+  type!: InventoryTransactionType;
 
   @Column({ type: 'int' })
   quantity!: number;
 
+  @Column({ name: 'reference_type', type: 'varchar', length: 50, nullable: true })
+  referenceType!: string | null;
+
   @Column({ name: 'reference_id', type: 'uuid', nullable: true })
   referenceId!: string | null;
+
+  @Column({ name: 'workflow_request_id', type: 'uuid', nullable: true })
+  workflowRequestId!: string | null;
 
   @Column({ type: 'text', nullable: true })
   note!: string | null;

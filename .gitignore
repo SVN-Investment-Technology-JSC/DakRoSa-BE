@@ -12,3 +12,4 @@ logs/
 *.log
 .pnpm-store
 .pnpm-store/
+DOC/

@@ -6,6 +6,7 @@ import {
 } from '../common/constants/permissions';
 import AppDataSource from './data-source';
 import { seedOrganizationDemo } from './seeds/organization-demo.seed';
+import { seedInventoryDemo } from './seeds/inventory-demo.seed';
 import {
   PermissionEntity,
   RoleEntity,
@@ -140,6 +141,7 @@ async function seed(): Promise<void> {
   await membershipRepository.save(membership);
 
   await seedOrganizationDemo(AppDataSource, tenant);
+  await seedInventoryDemo(AppDataSource, tenant);
 
   // Never print credentials or token material. This line only confirms completion.
   process.stdout.write(

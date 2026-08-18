@@ -10,6 +10,7 @@ import {
 import { TenantEntity } from './tenant.entity';
 import { MaterialEntity } from './material.entity';
 import { WarehouseEntity } from './warehouse.entity';
+import { WarehouseLocationEntity } from './warehouse-location.entity';
 
 @Entity({ name: 'material_inventory' })
 export class MaterialInventoryEntity {
@@ -39,6 +40,16 @@ export class MaterialInventoryEntity {
 
   @Column({ type: 'int', default: 0 })
   quantity!: number;
+
+  @Column({ name: 'quantity_reserved', type: 'int', default: 0 })
+  quantityReserved!: number;
+
+  @Column({ name: 'location_id', type: 'uuid', nullable: true })
+  locationId!: string | null;
+
+  @ManyToOne(() => WarehouseLocationEntity, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'location_id' })
+  warehouseLocation!: WarehouseLocationEntity | null;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   location!: string | null;
